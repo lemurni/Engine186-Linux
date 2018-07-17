@@ -89,6 +89,8 @@ set(SRC_CPP
     src/Transform.cpp
     src/UniformSetter.cpp
     src/Vertex.cpp
+    src/VoxelizationTestScene.cpp
+    src/Voxelizer.cpp
 		
 	external/src/glad.cpp
 )
@@ -141,6 +143,8 @@ set(SRC_H
     include/Vertex.h
     include/VertexAttribData.h
     include/VertexAttribLocation.h
+    include/VoxelizationTestScene.h
+    include/Voxelizer.h
 		
 	external/include/glad/glad.h
 )

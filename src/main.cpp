@@ -3,18 +3,16 @@
 #ifdef  _WIN32
     #include "stdafx.h"
 #endif
-#include "SceneSelectorScene.h"
-#include "SampleSceneTessIco.h"
-#include "ModelExplorerScene.h"
+#include "VoxelizationTestScene.h"
 
 int main()
 {
 	e186::Engine::StartWindowedWithRootScene(1600, 900, []()
 	{
-		auto sel_scene = std::make_unique<e186::SceneSelectorScene>();
-		sel_scene->AddScene<e186::SampleSceneTessIco>();
-		sel_scene->AddSceneGenFunc("Model Explorer: Sponza", []() { return std::make_unique<e186::ModelExplorerScene>("assets/models/sponza/sponza_structure.obj", glm::scale(glm::vec3(.01f, .01f, .01f))); });
-		return sel_scene;
+		// path to mesh for testing voxelization
+		std::string modelPath = "assets/models/sponza/sponza_structure.obj";
+
+		return std::make_unique<e186::VoxelizationTestScene>(modelPath, glm::scale(glm::vec3(.01f, .01f, .01f)));
 	});
 }
 
