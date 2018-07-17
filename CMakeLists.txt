@@ -73,6 +73,8 @@ set(SRC_CPP
     src/ModelExplorerScene.cpp
     src/PointLight.cpp
     src/QuakeCamera.cpp
+    src/Rect.cpp
+    src/RenderConfig.cpp
     src/SampleSceneTessIco.cpp
     src/SceneSelectorScene.cpp
     src/Shader.cpp
@@ -85,6 +87,7 @@ set(SRC_CPP
     src/TexInfo.cpp
     src/TexLoadingHelper.cpp
     src/Transform.cpp
+    src/UniformSetter.cpp
     src/Vertex.cpp
 		
 	external/src/glad.cpp
@@ -117,10 +120,13 @@ set(SRC_H
     include/ModelExplorerScene.h
     include/PointLight.h
     include/QuakeCamera.h
+    include/Rect.h
     include/RenderConfig.h
+    include/RenderData.h
     include/SampleSceneTessIco.h
     include/SceneSelectorScene.h
     include/Shader.h
+    include/ShaderSourceInfo.h
     include/ShaderType.h
     include/SpotLight.h
     include/Stopwatch.h
@@ -131,6 +137,7 @@ set(SRC_H
     include/TexInfo.h
     include/TexLoadingHelper.h
     include/Transform.h
+    include/UniformSetter.h
     include/Vertex.h
     include/VertexAttribData.h
     include/VertexAttribLocation.h
@@ -141,21 +148,22 @@ set(SRC_H
 # relative path to shader files
 set(SRC_SHADERS
 
-    assets/shaders/blinnphong.frag
-    assets/shaders/blinnphong.vert
-    assets/shaders/blinnphong_nm.frag
     assets/shaders/blinnphong_nm.vert
-    assets/shaders/geodesic.frag
-    assets/shaders/geodesic.geom
-    assets/shaders/geodesic.tesc
-    assets/shaders/geodesic.tese
-    assets/shaders/geodesic.vert
-    assets/shaders/terrain.frag
-    assets/shaders/terrain.vert
-    assets/shaders/texture.frag
+    assets/shaders/blinnphong_nm.frag
+    assets/shaders/texture_reduce_avg.comp
     assets/shaders/texture.vert
-    assets/shaders/translucent_gizmo.frag
+    assets/shaders/texture.frag
     assets/shaders/translucent_gizmo.vert
+    assets/shaders/translucent_gizmo.frag
+    assets/shaders/terrain.vert
+    assets/shaders/terrain.frag
+    assets/shaders/geodesic.vert
+    assets/shaders/geodesic.tese
+    assets/shaders/geodesic.tesc
+    assets/shaders/geodesic.geom
+    assets/shaders/geodesic.frag
+    assets/shaders/blinnphong.vert
+    assets/shaders/blinnphong.frag
 
 )
 
