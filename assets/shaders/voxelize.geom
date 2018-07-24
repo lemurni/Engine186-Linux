@@ -9,15 +9,15 @@ uniform int uVoxelStorageMode; // 0: regular 3D texture voxel grid, 1: voxel oct
 in VertexData
 {
     vec2 texCoords;
-    vec3 positionVS; // vertex position in view space
-    vec3 normalVS;   // vertex normal in view space
+    vec3 positionMS; // vertex position in model space
+    vec3 normalMS;   // vertex normal in model space
 } v_in[];
 
 out VertexData
 {
     vec2 texCoords;
-    vec3 positionVS;
-    vec3 normalVS;
+    vec3 positionMS;
+    vec3 normalMS;
 } v_out;
 
 flat out int axisOfTriangleProjection; // to restore 3D voxel data in fragment shader, flat to avoid interpolation
@@ -34,24 +34,46 @@ flat out int axisOfTriangleProjection; // to restore 3D voxel data in fragment s
 
 void main() {
 
+    mat4 projMat;
+
     // determine in which coordinate axis the triangle normal is facing the most
     // to find the projection axis that yields the maximum projected area
     vec3 N = normalize(normalVS);
     if (abs(N.x) > abs(N.y) && abs(N.x) > abs(N.z)
     {
         axisOfTriangleProjection = 0;
+        projMat = uViewProjMatOrthoX;
     }
     else if (abs(N.y) > abs(N.x) && abs(N.y) > abs(N.z)
     {
         axisOfTriangleProjection = 1;
+        projMat = uViewProjMatOrthoY;
     }
     else
     {
         axisOfTriangleProjection = 2;
+        projMat = uViewProjMatOrthoZ;
     }
 
-    // project triangle vertices
+    // project triangle vertices to normalized device coordinates
+    // using orthographic projection (no perspective divide)
 
+    vec4 positions[3];
+    positions[0] = projMat * gl_in[0].gl_Position;
+    positions[1] = projMat * gl_in[1].gl_Position;
+    positions[2] = projMat * gl_in[2].gl_Position;
 
+    // store vertex data
+
+    for (int i = 0; i < 3; ++i)
+    {
+        gl_Position = positions[i];
+        v_out.positionMS = positions[i].xyz;
+        v_out.normalMS = v_in[i].normalMS;
+        v_out.texCoords = v_in[i].texCoords;
+        EmitVertex();
+    }
+
+    EndPrimitive();
 
 }
