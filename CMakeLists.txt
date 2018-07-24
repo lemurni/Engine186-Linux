@@ -168,6 +168,9 @@ set(SRC_SHADERS
     assets/shaders/geodesic.frag
     assets/shaders/blinnphong.vert
     assets/shaders/blinnphong.frag
+    assets/shaders/voxelize.vert
+    assets/shaders/voxelize.geom
+    assets/shaders/voxelize.frag
 
 )
 

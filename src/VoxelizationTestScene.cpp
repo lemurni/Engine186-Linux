@@ -18,7 +18,7 @@ namespace e186
 		m_model->CreateAndUploadGpuData();
 
 		// voxelize the given mesh model
-		m_voxelizer.Voxelize(m_model);
+		m_voxelizer.Voxelize(m_model, 256);
 
 	}
 
