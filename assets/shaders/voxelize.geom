@@ -1,10 +1,12 @@
 layout (triangles) in;
 layout (triangle_strip, max_vertices = 3) out; // options are points, line_strip, triangle_strip. we want output triangles.
 
-uniform mat4 uViewProjMatOrthoX;
-uniform mat4 uViewProjMatOrthoY;
-uniform mat4 uViewProjMatOrthoZ;
-uniform int uVoxelStorageMode; // 0: regular 3D texture voxel grid, 1: voxel octree
+uniform mat4 uViewProjMatOrthoX; // look at origin from +X, +Y is up, orthographic proj to unit cube
+uniform mat4 uViewProjMatOrthoY; // look at origin from +Y, -Z is up, orthographic proj to unit cube
+uniform mat4 uViewProjMatOrthoZ; // look at origin from +Z, +Y is up, orthographic proj to unit cube
+
+uniform int uVoxelStorageMode; // 0: 3D texture voxel grid, 1: voxel octree
+uniform int uVoxelGridResolution; // used for x, y, z
 
 in VertexData
 {

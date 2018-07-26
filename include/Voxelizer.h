@@ -15,7 +15,7 @@ namespace e186
 
 		enum struct VoxelStorageMode
 	    {
-			RegularGridTex3D = 0,
+			Tex3D = 0,
 			OctreeHierarchy = 1
 	    };
 		
@@ -32,7 +32,7 @@ namespace e186
 		// shader for the gpu rasterizer based voxelization
 		Shader m_mesh_to_voxel_rasterization_shader;
 
-		int voxelGridSize;
+		int m_voxelGridResolution;
 
 		// OpenGL 3D Texture to store voxels in regular grid
 		// if RegularGridTex3D enabled, stores result of latest call to Voxelizer::Voxelize()
@@ -50,7 +50,7 @@ namespace e186
 
 		// voxelize the given mesh and store the result in a data structure
 		// the resulting data structure is determined by m_voxel_storage_mode
-		void Voxelize(std::unique_ptr<Model> &sourceMeshModel, int voxelGridSize);
+		void Voxelize(std::unique_ptr<Model> &sourceMeshModel, int voxelGridResolution);
 
 		// visualize the voxels
 		void RenderVoxelGrid();
