@@ -5,7 +5,6 @@ uniform mat4 uViewProjMatOrthoX; // look at origin from +X, +Y is up, orthograph
 uniform mat4 uViewProjMatOrthoY; // look at origin from +Y, -Z is up, orthographic proj to unit cube
 uniform mat4 uViewProjMatOrthoZ; // look at origin from +Z, +Y is up, orthographic proj to unit cube
 
-uniform int uVoxelStorageMode; // 0: 3D texture voxel grid, 1: voxel octree
 uniform int uVoxelGridResolution; // used for x, y, z
 
 in VertexData
@@ -40,13 +39,13 @@ void main() {
 
     // determine in which coordinate axis the triangle normal is facing the most
     // to find the projection axis that yields the maximum projected area
-    vec3 N = normalize(normalVS);
-    if (abs(N.x) > abs(N.y) && abs(N.x) > abs(N.z)
+    vec3 N = normalize(v_in[0].normalMS);
+    if (abs(N.x) > abs(N.y) && abs(N.x) > abs(N.z))
     {
         axisOfTriangleProjection = 0;
         projMat = uViewProjMatOrthoX;
     }
-    else if (abs(N.y) > abs(N.x) && abs(N.y) > abs(N.z)
+    else if (abs(N.y) > abs(N.x) && abs(N.y) > abs(N.z))
     {
         axisOfTriangleProjection = 1;
         projMat = uViewProjMatOrthoY;

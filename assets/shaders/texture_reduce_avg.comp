@@ -1,0 +1,22 @@
+layout(r16f) readonly uniform restrict image2D inImg; // mipmap level k
+layout(r16f) writeonly uniform restrict image2D outImgNextMipmapLvl; // mipmap level k+1 of same texture
+
+// number of threads should be width*height of outImgNextMipmapLvl
+
+layout(local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
+void main()
+{
+
+    ivec2 samplePos00 = ivec2(gl_GlobalInvocationID.xy)*2;
+    ivec2 samplePos01 = ivec2(gl_GlobalInvocationID.xy)*2 + ivec2(0, 1);
+    ivec2 samplePos10 = ivec2(gl_GlobalInvocationID.xy)*2 + ivec2(1, 0);
+    ivec2 samplePos11 = ivec2(gl_GlobalInvocationID.xy)*2 + ivec2(1, 1);
+
+    float avgFloat = 0.25f * (imageLoad(inImg, samplePos00).r
+                              + imageLoad(inImg, samplePos01).r
+                              + imageLoad(inImg, samplePos10).r
+                              + imageLoad(inImg, samplePos11).r);
+
+    imageStore(outImgNextMipmapLvl, ivec2(gl_GlobalInvocationID.xy), vec4(avgFloat, 0, 0, 0));
+
+}

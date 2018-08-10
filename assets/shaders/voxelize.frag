@@ -28,7 +28,7 @@ layout(pixel_center_integer) in vec4 gl_FragCoord;
 
 void main()
 {
-    uvec3 voxelCoord;
+    ivec3 voxelCoord;
 
     // determine voxel coordinates
     // after the rasterization step
@@ -38,24 +38,24 @@ void main()
     // when storing to a 2D image that doesnt matter, but we want an axis-aligned voxel grid,
     // so we need to remap according to the lookAt matrices used in geometry shader.
     // note: depth of the projected triangle is stored in gl_FragCoord.z without perspective nonlinear distortion
-    uint depth = uint(gl_FragCoord.z);
+    float depth = gl_FragCoord.z;
     if (axisOfTriangleProjection == 0) // x
     {
-        voxelCoord.x = uVoxelGridResolution - uVoxelGridResolution * depth;
-        voxelCoord.y = uint(gl_FragCoord.y);
-        voxelCoord.z = uint(gl_FragCoord.x);
+        voxelCoord.x = int(uVoxelGridResolution - uVoxelGridResolution * depth);
+        voxelCoord.y = int(gl_FragCoord.y);
+        voxelCoord.z = int(gl_FragCoord.x);
     }
     else if (axisOfTriangleProjection == 1) // y
     {
-        voxelCoord.x = uint(gl_FragCoord.x);
-        voxelCoord.y = uVoxelGridResolution - uVoxelGridResolution * depth;
-        voxelCoord.z = uint(gl_FragCoord.y);
+        voxelCoord.x = int(gl_FragCoord.x);
+        voxelCoord.y = int(uVoxelGridResolution - uVoxelGridResolution * depth);
+        voxelCoord.z = int(gl_FragCoord.y);
     }
     else if (axisOfTriangleProjection == 2) // z
     {
-        voxelCoord.x = uint(gl_FragCoord.x);
-        voxelCoord.y = uint(gl_FragCoord.y);
-        voxelCoord.z = uVoxelGridResolution * depth;
+        voxelCoord.x = int(gl_FragCoord.x);
+        voxelCoord.y = int(gl_FragCoord.y);
+        voxelCoord.z = int(uVoxelGridResolution * depth);
     }
 
     // store voxel data
@@ -65,7 +65,10 @@ void main()
     vec3 diff_tex_color = texture(uDiffuseTexSampler, scaledTexCoords).rgb;
 
     imageStore(uVoxelDiffuseReflectivity, voxelCoord, vec4(diff_tex_color, 1.0));
-    imageStore(uVoxelNormal, voxelCoord, vec4(normalMS, 0.0));
+
+
+
+    imageStore(uVoxelNormal, voxelCoord, vec4(v_in.normalMS, 0.0));
 
 
 }

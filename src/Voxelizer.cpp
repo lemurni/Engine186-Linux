@@ -5,17 +5,21 @@ namespace e186
 
     Voxelizer::Voxelizer()
 	    : m_tweak_bar(Engine::current()->tweak_bar_manager().create_new_tweak_bar("Voxelizer"))
-	    , m_voxelGridResolution(128)
+	    , m_voxel_grid_resolution(128)
 	{
 
-		/*
 		m_mesh_to_voxel_rasterization_shader
 			.AddToMultipleShaderSources(Shader::version_string(), ShaderType::Vertex | ShaderType::Geometry | ShaderType::Fragment)
 			.AddVertexShaderSourceFromFile("assets/shaders/voxelize.vert")
 			.AddGeometryShaderSourceFromFile("assets/shaders/voxelize.geom")
 			.AddFragmentShaderSourceFromFile("assets/shaders/voxelize.frag")
 			.Build();
-		*/
+
+		m_voxel_draw_raycast_shader
+		    .AddToMultipleShaderSources(Shader::version_string(), ShaderType::Vertex | ShaderType::Fragment)
+		    .AddVertexShaderSourceFromFile("assets/shaders/voxel_raycast.vert")
+		    .AddFragmentShaderSourceFromFile("assets/shaders/voxel_raycast.frag")
+		    .Build();
 
 		TwDefine("'Voxelizer' color='26 27 61' text=light position='50 50' ");
 
@@ -36,11 +40,11 @@ namespace e186
 		// TODO IMPLEMENT
 		std::cout << "Voxelizer::Voxelize(const Model &sourceMeshModel) not yet fully implemented." << std::endl;
 
-		m_voxelGridResolution = voxelGridResolution;
+		m_voxel_grid_resolution = voxelGridResolution;
 
 		// SETUP TARGET DATA STRUCTURES
 
-		m_voxels_tex3D.GenerateEmpty(m_voxelGridResolution, m_voxelGridResolution, m_voxelGridResolution);
+		m_voxels_tex3D.GenerateEmpty(m_voxel_grid_resolution, m_voxel_grid_resolution, m_voxel_grid_resolution);
 
 		// SETUP SHADER
 
@@ -58,8 +62,7 @@ namespace e186
 		m_mesh_to_voxel_rasterization_shader.SetUniform("uViewProjMatOrthoX", viewProjMatOrthoX);
 		m_mesh_to_voxel_rasterization_shader.SetUniform("uViewProjMatOrthoY", viewProjMatOrthoY);
 		m_mesh_to_voxel_rasterization_shader.SetUniform("uViewProjMatOrthoZ", viewProjMatOrthoZ);
-		m_mesh_to_voxel_rasterization_shader.SetUniform("uVoxelStorageMode", static_cast<int>(m_voxel_storage_mode));
-		m_mesh_to_voxel_rasterization_shader.SetUniform("uVoxelGridResolution", static_cast<int>(m_voxelGridResolution));
+		m_mesh_to_voxel_rasterization_shader.SetUniform("uVoxelGridResolution", static_cast<int>(m_voxel_grid_resolution));
 		m_mesh_to_voxel_rasterization_shader.SetImageTexture("uVoxelDiffuseReflectivity", m_voxels_tex3D, 0, 0, false, 0, GL_WRITE_ONLY);
 		m_mesh_to_voxel_rasterization_shader.SetImageTexture("uVoxelNormal", m_voxels_tex3D, 1, 0, false, 0, GL_WRITE_ONLY);
 
@@ -76,11 +79,11 @@ namespace e186
 
 		// disable unwanted OpenGL functions
 		glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE); // dont write to framebuffer, we use image load/store instead
-		glDisable(GL_DEPTH_TEST); // we dont want to discard fragments that are behind others
 		glDisable(GL_CULL_FACE); // we dont want to discard triangles facing a certain direction
+		glDisable(GL_DEPTH_TEST); // we dont want to discard fragments that are behind others
 
 		// set the viewport pixel width and height to the size of the voxel grid
-		glViewport(0, 0, m_voxelGridResolution, m_voxelGridResolution);
+		glViewport(0, 0, m_voxel_grid_resolution, m_voxel_grid_resolution);
 
 		RenderMeshesWithAlignedUniformSetters(m_mesh_to_voxel_rasterization_shader, render_data, unisetters);
 
@@ -90,7 +93,26 @@ namespace e186
 	void Voxelizer::RenderVoxelGrid()
 	{
 		// TODO IMPLEMENT
-		std::cout << "Voxelizer::RenderVoxelGrid() not yet implemented." << std::endl;
+		std::cout << "Voxelizer::RenderVoxelGrid() not yet fully implemented." << std::endl;
+
+		// SETUP SHADER
+
+		m_voxel_draw_raycast_shader.Use();
+		m_voxel_draw_raycast_shader.SetUniform("uRaycastStepSize", m_raycast_step_size);
+		m_voxel_draw_raycast_shader.SetImageTexture("uVoxelDiffuseReflectivity", m_voxels_tex3D, 0, 0, false, 0, GL_READ_ONLY);
+
+		// DRAW
+
+		glEnable(GL_CULL_FACE);
+		glCullFace(GL_BACK);
+		glEnable(GL_DEPTH_TEST);
+
+		glViewport(0, 0, Engine::current()->window_width(), Engine::current()->window_height());
+
+		RenderFullScreen(m_voxel_draw_raycast_shader);
+
+		UnbindVAO;
+
 	}
 
 

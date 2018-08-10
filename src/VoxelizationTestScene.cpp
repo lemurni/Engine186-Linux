@@ -18,7 +18,7 @@ namespace e186
 		m_model->CreateAndUploadGpuData();
 
 		// voxelize the given mesh model
-		m_voxelizer.Voxelize(m_model, 256);
+		//m_voxelizer.Voxelize(m_model, 256);
 
 	}
 
@@ -100,6 +100,8 @@ namespace e186
 			shader.SetLight("uPointLight", point_light.GetGpuData(vM));
 			RenderMeshesWithAlignedUniformSetters(shader, render_data, unisetters);
 			UnbindVAO();
+
+			//m_voxelizer.RenderVoxelGrid();
 
 			Engine::current()->EndFrame();
 		}

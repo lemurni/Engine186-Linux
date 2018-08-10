@@ -32,7 +32,12 @@ namespace e186
 		// shader for the gpu rasterizer based voxelization
 		Shader m_mesh_to_voxel_rasterization_shader;
 
-		int m_voxelGridResolution;
+		// shader to draw voxels using raycasting
+		Shader m_voxel_draw_raycast_shader;
+
+		float m_raycast_step_size;
+
+		int m_voxel_grid_resolution;
 
 		// OpenGL 3D Texture to store voxels in regular grid
 		// if RegularGridTex3D enabled, stores result of latest call to Voxelizer::Voxelize()

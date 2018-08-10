@@ -97,6 +97,8 @@ set(SRC_CPP
 
 set(SRC_H
 
+    include/e186.h
+
     include/AmbientLight.h
     include/Animator.h
     include/AntTweakBarManager.h
@@ -171,6 +173,10 @@ set(SRC_SHADERS
     assets/shaders/voxelize.vert
     assets/shaders/voxelize.geom
     assets/shaders/voxelize.frag
+    assets/shaders/voxel_raycast.vert
+    assets/shaders/voxel_raycast.frag
+    assets/shaders/voxel_raycast_volumeexitposmap.vert
+    assets/shaders/voxel_raycast_volumeexitposmap.frag
 
 )
 
