@@ -98,10 +98,10 @@ namespace e186
 			shader.SetLight("uAmbientLight", ambient_light);
 			shader.SetLight("uDirectionalLight", directional_light.GetGpuData(vM));
 			shader.SetLight("uPointLight", point_light.GetGpuData(vM));
-			RenderMeshesWithAlignedUniformSetters(shader, render_data, unisetters);
+			//RenderMeshesWithAlignedUniformSetters(shader, render_data, unisetters);
 			UnbindVAO();
 
-			//m_voxelizer.RenderVoxelGrid();
+			m_voxelizer.RenderVoxelGrid();
 
 			Engine::current()->EndFrame();
 		}

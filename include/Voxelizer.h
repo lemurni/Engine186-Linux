@@ -24,6 +24,8 @@ namespace e186
 	
 		AntTweakBarHandle m_tweak_bar;
 
+		// VOXELIZATION AND VOXEL DATA
+
 		VoxelStorageMode m_voxel_storage_mode;
 
 		// the mesh model to be voxelized
@@ -31,11 +33,6 @@ namespace e186
 
 		// shader for the gpu rasterizer based voxelization
 		Shader m_mesh_to_voxel_rasterization_shader;
-
-		// shader to draw voxels using raycasting
-		Shader m_voxel_draw_raycast_shader;
-
-		float m_raycast_step_size;
 
 		int m_voxel_grid_resolution;
 
@@ -47,6 +44,17 @@ namespace e186
 		// if OctreeHierarchy enabled, stores result of latest call to Voxelizer::Voxelize()
 		//VoxelOctree m_voxels_octree;
 
+		// VOXEL RAYCAST
+
+		// shaders to draw voxels using raycasting
+		Shader m_voxel_raycast_shader;
+		Shader m_voxel_raycast_volumeexitposmap_shader;
+
+		FrameBufferObject m_voxel_raycast_volumeexitposmap_buffer;
+
+		float m_raycast_step_size;
+
+		std::unique_ptr<Model> m_unitCube;
 
 	public:
 	

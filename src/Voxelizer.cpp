@@ -6,7 +6,13 @@ namespace e186
     Voxelizer::Voxelizer()
 	    : m_tweak_bar(Engine::current()->tweak_bar_manager().create_new_tweak_bar("Voxelizer"))
 	    , m_voxel_grid_resolution(128)
+	    , m_voxel_raycast_volumeexitposmap_buffer { Engine::current()->window_width(), Engine::current()->window_height() }
 	{
+
+		m_voxels_tex3D.GenerateEmpty(m_voxel_grid_resolution, m_voxel_grid_resolution, m_voxel_grid_resolution);
+		m_voxels_tex3D.GenerateDepthTestData(m_voxel_grid_resolution, m_voxel_grid_resolution, m_voxel_grid_resolution);
+
+		// BUILD SHADER PROGRAMS
 
 		m_mesh_to_voxel_rasterization_shader
 			.AddToMultipleShaderSources(Shader::version_string(), ShaderType::Vertex | ShaderType::Geometry | ShaderType::Fragment)
@@ -15,11 +21,34 @@ namespace e186
 			.AddFragmentShaderSourceFromFile("assets/shaders/voxelize.frag")
 			.Build();
 
-		m_voxel_draw_raycast_shader
+		m_voxel_raycast_shader
 		    .AddToMultipleShaderSources(Shader::version_string(), ShaderType::Vertex | ShaderType::Fragment)
 		    .AddVertexShaderSourceFromFile("assets/shaders/voxel_raycast.vert")
 		    .AddFragmentShaderSourceFromFile("assets/shaders/voxel_raycast.frag")
 		    .Build();
+
+		m_voxel_raycast_volumeexitposmap_shader
+		    .AddToMultipleShaderSources(Shader::version_string(), ShaderType::Vertex | ShaderType::Fragment)
+		    .AddVertexShaderSourceFromFile("assets/shaders/voxel_raycast_volumeexitposmap.vert")
+		    .AddFragmentShaderSourceFromFile("assets/shaders/voxel_raycast_volumeexitposmap.frag")
+		    .Build();
+
+		// SETUP RAYCAST STUFF
+
+		m_voxel_raycast_volumeexitposmap_buffer.AttachComponent(FboAttachmentConfig::kPresetRGB32F, GL_COLOR_ATTACHMENT0, TexParams::NearestFiltering);
+		m_voxel_raycast_volumeexitposmap_buffer.AttachComponent(FboAttachmentConfig::kPresetDepthStencil24_8, { GL_DEPTH_ATTACHMENT, GL_STENCIL_ATTACHMENT }, TexParams::NearestFiltering);
+		m_voxel_raycast_volumeexitposmap_buffer.set_clear_color(glm::vec4(.0f, .0f, .0f, 1.f));
+		m_voxel_raycast_volumeexitposmap_buffer.Bind();
+		m_voxel_raycast_volumeexitposmap_buffer.Clear();
+		m_voxel_raycast_volumeexitposmap_buffer.Unbind();
+		assert(m_voxel_raycast_volumeexitposmap_buffer.ready_for_action());
+
+		// unit cube moved to be centered at origin
+		m_unitCube = Model::LoadFromFile("assets/models/cube.obj", glm::translate(glm::vec3(-0.5f, -0.5f, -0.5f)), MOLF_default);
+		assert(m_unitCube);
+		m_unitCube->CreateAndUploadGpuData();
+
+		// SETUP ANTTWEAKBAR
 
 		TwDefine("'Voxelizer' color='26 27 61' text=light position='50 50' ");
 
@@ -95,23 +124,58 @@ namespace e186
 		// TODO IMPLEMENT
 		std::cout << "Voxelizer::RenderVoxelGrid() not yet fully implemented." << std::endl;
 
-		// SETUP SHADER
-
-		m_voxel_draw_raycast_shader.Use();
-		m_voxel_draw_raycast_shader.SetUniform("uRaycastStepSize", m_raycast_step_size);
-		m_voxel_draw_raycast_shader.SetImageTexture("uVoxelDiffuseReflectivity", m_voxels_tex3D, 0, 0, false, 0, GL_READ_ONLY);
-
-		// DRAW
-
-		glEnable(GL_CULL_FACE);
-		glCullFace(GL_BACK);
-		glEnable(GL_DEPTH_TEST);
-
 		glViewport(0, 0, Engine::current()->window_width(), Engine::current()->window_height());
+		glEnable(GL_DEPTH_TEST);
+		glEnable(GL_CULL_FACE);
 
-		RenderFullScreen(m_voxel_draw_raycast_shader);
+		auto& cube_mesh = m_unitCube->mesh_at(0);
 
-		UnbindVAO;
+		///////////////////////////////////////////////////////////////////////////////
+		// FIRST PASS
+		// generate ray volume exit position map later used to construct rays
+		///////////////////////////////////////////////////////////////////////////////
+
+		m_voxel_raycast_volumeexitposmap_buffer.Bind();
+
+		m_voxel_raycast_volumeexitposmap_shader.Use();
+		m_voxel_raycast_shader.SetUniform("uModelViewProjMat", glm::mat4(1.0f));
+
+		// draw volume cube back faces (front face culling enabled)
+		// rayVolumeExitPosMapShader stores interpolated back face (ray exit) positions in framebuffer texture
+		glCullFace(GL_FRONT);
+		RenderMesh(m_voxel_raycast_volumeexitposmap_shader, cube_mesh);
+
+		///////////////////////////////////////////////////////////////////////////////
+		// SECOND PASS
+		// calculate ray volume entry positions and together with exit position map
+		// do raycasting from entry to exit position of each fragment
+		///////////////////////////////////////////////////////////////////////////////
+
+		FrameBufferObject::default_framebuffer().Bind().ClearColor().ClearDepth().SetViewport();
+
+		m_voxel_raycast_shader.Use();
+		m_voxel_raycast_shader.SetUniform("uModelViewProjMat", glm::mat4(1.0f));
+		m_voxel_raycast_shader.SetUniform("uRaycastStepSize", m_raycast_step_size);
+		const auto* raycast_volumeexitposmap_tex = m_voxel_raycast_volumeexitposmap_buffer.FindAttachedTexture(GL_COLOR_ATTACHMENT0);
+		m_voxel_raycast_shader.SetImageTexture("uExitPositions", raycast_volumeexitposmap_tex, 0, 0, false, 0, GL_READ_ONLY);
+		m_voxel_raycast_shader.SetImageTexture("uVoxelDiffuseReflectivity", m_voxels_tex3D, 1, 0, false, 0, GL_READ_ONLY);
+
+		// draw unit cube with back face culling to get front face fragments where view rays enter volume
+		// raycastShader uses ray entry positions with exit positions from first pass
+		// these rays through the unit cube are used for 3D texture sampling
+		// raycasting then steps along the ray and samples the voxel intensities and outputs a color
+		glCullFace(GL_BACK);
+		RenderMesh(m_voxel_raycast_shader, cube_mesh);
+		glDisable(GL_CULL_FACE);
+		UnbindVAO();
+
+		// DEBUG VIEW FIRST PASS TEXTURE
+		// blit framebuffer from first pass to default framebuffer
+		// blit = bit block image transfer, combine bitmaps via boolean operation
+		//BlitColor(m_voxel_raycast_volumeexitposmap_buffer, FrameBufferObject::default_framebuffer());
+
+		std::cout << "DEBUG working until here" << std::endl;
+
 
 	}
 
