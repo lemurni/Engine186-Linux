@@ -8,17 +8,20 @@ namespace e186
 {
 	 
 
-    VoxelizationTestScene::VoxelizationTestScene(std::string model_to_load_path, glm::mat4 transformation_matrix, unsigned int model_loader_flags)
+    VoxelizationTestScene::VoxelizationTestScene()
 	    : m_termination_requested(false)
-	    , m_voxelizer()
 	{
-		m_model = Model::LoadFromFile(model_to_load_path, transformation_matrix, model_loader_flags);
-		assert(m_model);
 
-		m_model->CreateAndUploadGpuData();
+		m_scene_model = Model::LoadFromFile("assets/models/sponza/sponza_structure.obj", glm::scale(glm::vec3(.01f, .01f, .01f)), MOLF_default);
+		assert(m_scene_model);
+		m_scene_model->CreateAndUploadGpuData();
 
-		// voxelize the given mesh model
-		//m_voxelizer.Voxelize(m_model, 256);
+		m_voxelize_model = Model::LoadFromFile("assets/models/sphere.obj", glm::scale(glm::vec3(1.f, 1.f, 1.f)), MOLF_default);
+		assert(m_voxelize_model);
+
+		// voxelize the given mesh
+		m_voxelizer = std::unique_ptr<Voxelizer>(new Voxelizer());
+		//m_voxelizer->Voxelize(m_voxelize_model, 256);
 
 	}
 
@@ -34,9 +37,9 @@ namespace e186
 
 	void VoxelizationTestScene::Run()
 	{
-		// create a shader:
-		Shader shader;
-		shader.AddToMultipleShaderSources(Shader::version_string(), ShaderType::Vertex | ShaderType::Fragment)
+		// shader to draw scene
+		Shader scene_shader;
+		scene_shader.AddToMultipleShaderSources(Shader::version_string(), ShaderType::Vertex | ShaderType::Fragment)
 			  .AddVertexShaderSourceFromFile("assets/shaders/blinnphong.vert")
 			  .AddFragmentShaderSourceFromFile("assets/shaders/blinnphong.frag", { std::make_tuple(0, "oFragColor") })
 			  .DeclareAutoMatrix("pMatrix", AutoMatrix::ProjectionMatrix)
@@ -45,11 +48,11 @@ namespace e186
 			  .Build();
 
 		// select some meshes which we intend to render
-		auto meshes = m_model->SelectAllMeshes();
+		auto meshes = m_scene_model->SelectAllMeshes();
 		// generate uniform setters for all selected meshes for a specific shader
-		auto unisetters = Model::CompileUniformSetters(shader, meshes);
+		auto unisetters = Model::CompileUniformSetters(scene_shader, meshes);
 		// get VAOs of all selected meshes
-		auto render_data = Model::GetOrCreateRenderData(shader, meshes);
+		auto render_data = Model::GetOrCreateRenderData(scene_shader, meshes);
 
 		AmbientLight ambient_light(glm::vec3(0.1f, 0.1f, 0.1f));
 		ambient_light.set_enabled(true);
@@ -77,10 +80,14 @@ namespace e186
 		glFrontFace(GL_CCW);
 		glDisable(GL_BLEND);
 
-		auto& tM = m_model->transformation_matrix();
+		auto& tM = m_scene_model->transformation_matrix();
 
 		while (!m_termination_requested)
 		{
+			// BEGIN FRAME
+
+			std::cout << "FRAME BEGIN" << std::endl;
+
 			Engine::current()->BeginFrame();
 			timer.Tick();
 
@@ -88,22 +95,34 @@ namespace e186
 			auto pM = cam.projection_matrix();
 			auto vM = cam.CalculateViewMatrix();
 
-			// render scene to back buffer
+			// DRAW SCENE
+
+			// draw scene to back buffer
 			glViewport(0, 0, Engine::current()->window_width(), Engine::current()->window_height());
 			glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-			shader.Use();
-			shader.SetAutoMatrices(m_model->transformation_matrix(), glm::mat4(1.0f), vM, pM);
-			shader.SetLight("uAmbientLight", ambient_light);
-			shader.SetLight("uDirectionalLight", directional_light.GetGpuData(vM));
-			shader.SetLight("uPointLight", point_light.GetGpuData(vM));
-			//RenderMeshesWithAlignedUniformSetters(shader, render_data, unisetters);
+			scene_shader.Use();
+			scene_shader.SetAutoMatrices(m_scene_model->transformation_matrix(), glm::mat4(1.0f), vM, pM);
+			scene_shader.SetLight("uAmbientLight", ambient_light);
+			scene_shader.SetLight("uDirectionalLight", directional_light.GetGpuData(vM));
+			scene_shader.SetLight("uPointLight", point_light.GetGpuData(vM));
+			//RenderMeshesWithAlignedUniformSetters(scene_shader, render_data, unisetters);
 			UnbindVAO();
 
-			m_voxelizer.RenderVoxelGrid();
+			std::cout << "Finished Drawing Scene" << std::endl;
+
+			// DRAW VOXEL GRID
+
+			m_voxelizer->RenderVoxelGrid();
+
+			std::cout << "Finished Drawing Voxel Grid" << std::endl;
+
+			// END FRAME
 
 			Engine::current()->EndFrame();
+
+			std::cout << "FRAME ENDED" << std::endl;
 		}
 	}
 }

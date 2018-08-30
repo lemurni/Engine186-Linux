@@ -12,7 +12,7 @@ namespace e186
     class VoxelizationTestScene : public IScene
 	{
 	public:
-		VoxelizationTestScene(std::string model_to_load_path, glm::mat4 transformation_matrix, unsigned int model_loader_flags = MOLF_default);
+		VoxelizationTestScene();
 		virtual ~VoxelizationTestScene();
 		void Terminate() override;
 		void Run() override;
@@ -21,9 +21,10 @@ namespace e186
 
 		bool m_termination_requested;
 
-		Voxelizer m_voxelizer;
+		std::unique_ptr<Voxelizer> m_voxelizer;
+		std::unique_ptr<Model> m_voxelize_model;
 
-		std::unique_ptr<Model> m_model;
+		std::unique_ptr<Model> m_scene_model;
 	};
 
 }

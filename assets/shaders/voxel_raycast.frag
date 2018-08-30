@@ -2,7 +2,7 @@
 // interpolated fragment entry position of a ray through the volume
 in vec3 entryPos;
 
-out vec4 outColor;
+out vec4 oFragColor;
 
 uniform sampler2D uExitPositions; // precalculated exit positions for an orthogonal ray from each fragment
 uniform sampler3D uVoxelDiffuseReflectivity;
@@ -11,6 +11,8 @@ uniform vec2 uScreenDimensions;
 
 void main()
 {
+    oFragColor = vec4(0, 1, 0, 1); return;
+
 
     vec3 exitPos = texture(uExitPositions, gl_FragCoord.st / uScreenDimensions).xyz;
 
@@ -46,6 +48,6 @@ void main()
         currentVoxelPos += rayDelta;
     }
 
-    outColor = vec4(voxelDiffuseReflectivity, 1);
+    oFragColor = vec4(voxelDiffuseReflectivity, 1);
 
 }

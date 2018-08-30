@@ -1,8 +1,8 @@
 in vec3 exitPos;
 
-out vec4 outColor;
+out vec4 oFragColor;
 
 void main()
 {
-    outColor = vec4(exitPos, 1.0);
+    oFragColor = vec4(exitPos, 1.0);
 }

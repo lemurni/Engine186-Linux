@@ -50,6 +50,7 @@ namespace e186
 		Shader m_voxel_raycast_shader;
 		Shader m_voxel_raycast_volumeexitposmap_shader;
 
+		FrameBufferObject m_voxel_raycast_result_buffer;
 		FrameBufferObject m_voxel_raycast_volumeexitposmap_buffer;
 
 		float m_raycast_step_size;
