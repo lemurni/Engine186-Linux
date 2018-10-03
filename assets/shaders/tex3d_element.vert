@@ -15,9 +15,9 @@ out vec3 vertexColor;
 mat4 translationMatrix(vec3 tvec)
 {    
 	return mat4(1.0, 0.0, 0.0,  0.0,
-				0.0, 1.0, 0.0,  0.0,
-				0.0, 0.0, 1.0,  0.0,
-				tvec.x, tvec.y, tvec.z,  1.0);
+                    0.0, 1.0, 0.0,  0.0,
+                    0.0, 0.0, 1.0,  0.0,
+                    tvec.x, tvec.y, tvec.z,  1.0);
 }
 
 void main()

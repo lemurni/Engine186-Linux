@@ -7,14 +7,14 @@ namespace e186
 	    : m_tweak_bar(Engine::current()->tweak_bar_manager().create_new_tweak_bar("Voxelizer"))
 	    , m_voxel_grid_resolution(128)
 	    , m_voxel_storage_mode(VoxelStorageMode::Tex3D)
+	    , m_tex3Ddisp(m_voxels_tex3D)
 	    , m_raycast_step_size(0.01)
 	    , m_voxel_raycast_volumeexitposmap_buffer { Engine::current()->window_width(), Engine::current()->window_height() }
 	    , m_voxel_raycast_result_buffer { Engine::current()->window_width(), Engine::current()->window_height() }
 	{
 
 		std::cout << "Voxelizer::Voxelizer() 3D texture generate test data" << std::endl;
-		m_voxels_tex3D.GenerateEmpty(m_voxel_grid_resolution, m_voxel_grid_resolution, m_voxel_grid_resolution);
-		m_voxels_tex3D.GenerateDepthTestData(m_voxel_grid_resolution, m_voxel_grid_resolution, m_voxel_grid_resolution);
+		m_voxels_tex3D.GenerateLDRTestData(32, 32, 32).Upload().BindAndSetTextureParameters(TexParams::NearestFiltering);
 
 		// BUILD SHADER PROGRAMS
 
@@ -130,6 +130,12 @@ namespace e186
 
 	void Voxelizer::RenderVoxelGrid()
 	{
+		// new code using Tex3dDisplayer
+
+		m_tex3Ddisp.Render(glm::scale(glm::vec3(0.1f, 0.1f, 0.1f)), glm::mat4(1.0f), glm::mat4(1.0f));
+
+		/*/// old
+
 		// TODO IMPLEMENT
 		std::cout << "Voxelizer::RenderVoxelGrid() not yet fully implemented." << std::endl;
 
@@ -186,6 +192,7 @@ namespace e186
 
 		glDisable(GL_CULL_FACE);
 
+		//*/
 	}
 
 

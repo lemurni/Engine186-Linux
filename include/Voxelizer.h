@@ -3,6 +3,7 @@
 // note: several header are included by the precompiled prefix header include/e186.h
 #include "Tex2D.h"
 #include "Tex3D.h"
+#include "Tex3dDisplayer.h"
 #include "FrameBufferObject.h"
 
 #include "e186.h"
@@ -41,6 +42,8 @@ namespace e186
 		// OpenGL 3D Texture to store voxels in regular grid
 		// if RegularGridTex3D enabled, stores result of latest call to Voxelizer::Voxelize()
 		Tex3D m_voxels_tex3D;
+
+		Tex3dDisplayer m_tex3Ddisp;
 
 		// Octree data structure for more efficient voxel storage
 		// if OctreeHierarchy enabled, stores result of latest call to Voxelizer::Voxelize()

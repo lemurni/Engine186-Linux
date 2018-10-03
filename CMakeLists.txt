@@ -83,6 +83,7 @@ set(SRC_CPP
     src/string_utils.cpp
     src/Tex2D.cpp
     src/Tex3D.cpp
+    src/Tex3dDisplayer.cpp
     src/TexData.cpp
     src/TexInfo.cpp
     src/TexLoadingHelper.cpp
@@ -138,6 +139,7 @@ set(SRC_H
     include/string_utils.h
     include/Tex2D.h
     include/Tex3D.h
+    include/Tex3dDisplayer.h
     include/TexData.h
     include/TexInfo.h
     include/TexLoadingHelper.h
@@ -161,6 +163,8 @@ set(SRC_SHADERS
     assets/shaders/texture_reduce_avg.comp
     assets/shaders/texture.vert
     assets/shaders/texture.frag
+    assets/shaders/tex3d_element.frag
+    assets/shaders/tex3d_element.vert
     assets/shaders/translucent_gizmo.vert
     assets/shaders/translucent_gizmo.frag
     assets/shaders/terrain.vert
