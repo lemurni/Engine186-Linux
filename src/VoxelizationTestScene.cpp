@@ -107,7 +107,7 @@ namespace e186
 			scene_shader.SetLight("uAmbientLight", ambient_light);
 			scene_shader.SetLight("uDirectionalLight", directional_light.GetGpuData(vM));
 			scene_shader.SetLight("uPointLight", point_light.GetGpuData(vM));
-			//RenderMeshesWithAlignedUniformSetters(scene_shader, render_data, unisetters);
+			RenderMeshesWithAlignedUniformSetters(scene_shader, render_data, unisetters);
 			UnbindVAO();
 
 			std::cout << "Finished Drawing Scene" << std::endl;
@@ -115,7 +115,6 @@ namespace e186
 			// DRAW VOXEL GRID
 
 			m_voxelizer->RenderVoxelGrid();
-
 			std::cout << "Finished Drawing Voxel Grid" << std::endl;
 
 			// END FRAME

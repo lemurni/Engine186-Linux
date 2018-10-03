@@ -6,6 +6,8 @@ namespace e186
     Voxelizer::Voxelizer()
 	    : m_tweak_bar(Engine::current()->tweak_bar_manager().create_new_tweak_bar("Voxelizer"))
 	    , m_voxel_grid_resolution(128)
+	    , m_voxel_storage_mode(VoxelStorageMode::Tex3D)
+	    , m_raycast_step_size(0.01)
 	    , m_voxel_raycast_volumeexitposmap_buffer { Engine::current()->window_width(), Engine::current()->window_height() }
 	    , m_voxel_raycast_result_buffer { Engine::current()->window_width(), Engine::current()->window_height() }
 	{
@@ -46,7 +48,7 @@ namespace e186
 		m_voxel_raycast_volumeexitposmap_buffer.Unbind();
 		assert(m_voxel_raycast_volumeexitposmap_buffer.ready_for_action());
 
-		m_voxel_raycast_result_buffer.AttachComponent(FboAttachmentConfig::kPresetRGB32F, GL_COLOR_ATTACHMENT0, TexParams::NearestFiltering);
+		m_voxel_raycast_result_buffer.AttachComponent(FboAttachmentConfig::kPresetRGBA32F, GL_COLOR_ATTACHMENT0, TexParams::NearestFiltering);
 		m_voxel_raycast_result_buffer.AttachComponent(FboAttachmentConfig::kPresetDepthStencil24_8, { GL_DEPTH_ATTACHMENT, GL_STENCIL_ATTACHMENT }, TexParams::NearestFiltering);
 		m_voxel_raycast_result_buffer.set_clear_color(glm::vec4(.0f, .0f, .0f, 1.f));
 		m_voxel_raycast_result_buffer.Bind();
@@ -63,11 +65,7 @@ namespace e186
 
 		TwDefine("'Voxelizer' color='26 27 61' text=light position='50 50' ");
 
-		TwEnumVal voxelStorageModeEV[] = {
-		    { static_cast<int>(VoxelStorageMode::Tex3D), "Tex3D" },
-		    { static_cast<int>(VoxelStorageMode::OctreeHierarchy), "OctreeHierarchy" }
-		};
-		TwType voxelStorageModeTWType = TwDefineEnum("Voxel Storage Mode", voxelStorageModeEV, 2);
+		TwType voxelStorageModeTWType = TwDefineEnumFromString("VoxelStorageMode", "Tex3D,OctreeHierarchy");
 		TwAddVarRW(m_tweak_bar, "Voxel Storage Mode", voxelStorageModeTWType, &m_voxel_storage_mode, "");
 	}
 
@@ -135,6 +133,7 @@ namespace e186
 		// TODO IMPLEMENT
 		std::cout << "Voxelizer::RenderVoxelGrid() not yet fully implemented." << std::endl;
 
+		//glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glViewport(0, 0, Engine::current()->window_width(), Engine::current()->window_height());
 		glEnable(GL_DEPTH_TEST);
 		glEnable(GL_CULL_FACE);
@@ -178,7 +177,7 @@ namespace e186
 		// raycastShader uses ray entry positions with exit positions from first pass
 		// these rays through the unit cube are used for 3D texture sampling
 		// raycasting then steps along the ray and samples the voxel intensities and outputs a color
-		glCullFace(GL_BACK);
+		glCullFace(GL_FRONT);
 		RenderMesh(m_voxel_raycast_shader, cube_mesh);
 		UnbindVAO();
 

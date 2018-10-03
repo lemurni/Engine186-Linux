@@ -91,8 +91,9 @@ set(SRC_CPP
     src/Vertex.cpp
     src/VoxelizationTestScene.cpp
     src/Voxelizer.cpp
-		
-	external/src/glad.cpp
+
+    external/src/glad.cpp
+
 )
 
 set(SRC_H
@@ -148,7 +149,8 @@ set(SRC_H
     include/VoxelizationTestScene.h
     include/Voxelizer.h
 		
-	external/include/glad/glad.h
+    external/include/glad/glad.h
+
 )
 
 # relative path to shader files
@@ -180,28 +182,32 @@ set(SRC_SHADERS
 
 )
 
-# adds an executable target with given name to be built from the source files listed afterwards
-add_executable(${PROJECT_NAME} ${SRC_H} ${SRC_CPP} ${SRC_SHADERS})
-
 ### INCLUDE HEADER FILES ###
 
 set(SRC_INCLUDE_DIR include)
 
-set(OTHER_EXTERNAL_INCLUDE_DIRS
+set(EXTERNAL_INCLUDE_DIRS
     external/include
     external/include/KHR
     external/include/glad
     external/include/FileWatcher
+    ${OPENGL_INCLUDE_DIRS}
+    ${GLFW_INCLUDE_DIRS}
+    ${ASSIMP_INCLUDE_DIRS}
+    ${ANT_TWEAK_BAR_INCLUDE_DIR}
 )
 
 include_directories(
     ${SRC_INCLUDE_DIR}
-    ${OPENGL_INCLUDE_DIRS}
-    ${GLFW_INCLUDE_DIRS}
-    ${ASSIMP_INCLUDE_DIRS}
-    ${OTHER_EXTERNAL_INCLUDE_DIRS}
-    ${ANT_TWEAK_BAR_INCLUDE_DIR}
+    ${EXTERNAL_INCLUDE_DIRS}
 )
+
+
+### DEFINE EXECUTABLE TARGET ###
+
+# adds an executable target with given name to be built from the source files listed afterwards
+add_executable(${PROJECT_NAME} ${SRC_H} ${SRC_CPP} ${SRC_SHADERS})
+
 
 ### LINK LIBRARIES ###
 target_link_libraries(
@@ -212,11 +218,13 @@ target_link_libraries(
     ${ANT_TWEAK_BAR_LIBRARY}
 )
 
+
 ### RUN COTIRE ###
 # using cotire cmake module to have "e186.h" as a precompiled prefix header (code inserted at beginning of every file) like visual studio does with the stdafx.h which in this case includes e186.h. without this, lots and lots of #includes would be missing in all files.
 # https://github.com/sakra/cotire/blob/master/MANUAL.md#using-a-manually-maintained-prefix-header-instead-of-the-automatically-generated-one
 set_target_properties(${PROJECT_NAME} PROPERTIES COTIRE_CXX_PREFIX_HEADER_INIT "include/e186.h")
 cotire(${PROJECT_NAME})
+
 
 ### COPY ASSETS ###
 

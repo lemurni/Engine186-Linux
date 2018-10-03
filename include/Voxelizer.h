@@ -5,6 +5,8 @@
 #include "Tex3D.h"
 #include "FrameBufferObject.h"
 
+#include "e186.h"
+
 namespace e186
 {
 

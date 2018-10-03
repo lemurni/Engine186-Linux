@@ -1,4 +1,3 @@
-
 // interpolated fragment entry position of a ray through the volume
 in vec3 entryPos;
 
@@ -11,10 +10,14 @@ uniform vec2 uScreenDimensions;
 
 void main()
 {
-    oFragColor = vec4(0, 1, 0, 1); return;
 
+    // DEBUG NOTE
+    // BOTH EXITPOS AND ENTRYPOS SHOULD BE EQUAL
+    // SHOULD BE BLACK RED GREEN YELLOW IN DIFFERENT CORNERS (XY MAPPED TO RG)
 
-    vec3 exitPos = texture(uExitPositions, gl_FragCoord.st / uScreenDimensions).xyz;
+    // DEBUG NOTE: WORKING IN EXITPOS SHADER, BUT HERE ITS ONLY WHITE!
+    vec3 exitPos = entryPos;
+    exitPos = vec3(1) - exitPos;
 
     if (entryPos == exitPos) {
         discard;
@@ -25,10 +28,10 @@ void main()
     // now we only need to step along the rays and sample the 3D texture
     vec3 raySegment = exitPos - entryPos;
     vec3 rayDirection = normalize(raySegment);
-    vec3 rayDelta = rayDirection * uRaycastStepSize;
+    vec3 rayDelta = rayDirection * 0.01;
     int steps = int(length(raySegment) / uRaycastStepSize);
 
-    vec3 currentVoxelPos = entryPos;
+    vec3 currentVoxelPos = entryPos; // DEBUG NOTE: WORKING
     vec3 firstHitPos = vec3(0); // first hit nonzero voxel position
 
     // sampled voxel data
@@ -37,7 +40,7 @@ void main()
     // step through the voxels along the fragment view ray
     for (int i = 0; i < steps; ++i) {
 
-        voxelDiffuseReflectivity = texture(uVoxelDiffuseReflectivity, currentVoxelPos).rgb;
+        voxelDiffuseReflectivity = currentVoxelPos;
 
         // break at first hit non empty voxel
         if (length(voxelDiffuseReflectivity) > 0) {
