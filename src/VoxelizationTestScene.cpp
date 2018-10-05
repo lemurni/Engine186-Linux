@@ -114,7 +114,7 @@ namespace e186
 
 			// DRAW VOXEL GRID
 
-			m_voxelizer->RenderVoxelGrid();
+			m_voxelizer->RenderVoxelGrid(vM, pM);
 			UnbindVAO();
 
 			std::cout << "Finished Drawing Voxel Grid" << std::endl;

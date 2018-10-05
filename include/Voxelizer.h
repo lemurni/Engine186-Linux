@@ -49,18 +49,6 @@ namespace e186
 		// if OctreeHierarchy enabled, stores result of latest call to Voxelizer::Voxelize()
 		//VoxelOctree m_voxels_octree;
 
-		// VOXEL RAYCAST
-
-		// shaders to draw voxels using raycasting
-		Shader m_voxel_raycast_shader;
-		Shader m_voxel_raycast_volumeexitposmap_shader;
-
-		FrameBufferObject m_voxel_raycast_result_buffer;
-		FrameBufferObject m_voxel_raycast_volumeexitposmap_buffer;
-
-		float m_raycast_step_size;
-
-		std::unique_ptr<Model> m_unitCube;
 
 	public:
 	
@@ -72,7 +60,7 @@ namespace e186
 		void Voxelize(std::unique_ptr<Model> &sourceMeshModel, int voxelGridResolution);
 
 		// visualize the voxels
-		void RenderVoxelGrid();
+		void RenderVoxelGrid(const glm::mat4 &vM, const glm::mat4 &pM);
 	};
 
 }
