@@ -1,5 +1,3 @@
-#extension GL_ARB_explicit_uniform_location : enable
-
 layout (location = 0) in vec4 aVertexPosition;
 layout (location = 1) in vec2 aVertexTexCoord;
 layout (location = 2) in vec3 aVertexNormal;

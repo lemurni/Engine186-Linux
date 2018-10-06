@@ -7,11 +7,12 @@ namespace e186
 	    : m_tweak_bar(Engine::current()->tweak_bar_manager().create_new_tweak_bar("Voxelizer"))
 	    , m_voxel_storage_mode(VoxelStorageMode::Tex3D)
 	    , m_voxel_grid_resolution(128)
+	    , m_enable_conservative_raster(true)
 	    , m_tex3Ddisp(m_voxels_tex3D)
 	{
 
 		std::cout << "Voxelizer::Voxelizer() 3D texture generate test data" << std::endl;
-		m_voxels_tex3D.GenerateLDRTestData(32, 32, 32).Upload().BindAndSetTextureParameters(TexParams::NearestFiltering);
+		m_voxels_tex3D.GenerateLDRTestData(128, 128, 128).Upload().BindAndSetTextureParameters(TexParams::NearestFiltering);
 
 		// BUILD SHADER PROGRAMS
 
@@ -24,11 +25,12 @@ namespace e186
 
 		// SETUP ANTTWEAKBAR
 
-		TwDefine("'Voxelizer' color='26 27 61' text=light position='50 50' ");
+		TwDefine("'Voxelizer' color='26 27 61' text=light position='50 200' ");
 
 		TwType voxelStorageModeTWType = TwDefineEnumFromString("VoxelStorageMode", "Tex3D,OctreeHierarchy");
-		TwAddVarRW(m_tweak_bar, "Voxel Storage Mode", voxelStorageModeTWType, &m_voxel_storage_mode, "");
 		TwAddVarCB(m_tweak_bar, "Render time (ms)", TW_TYPE_DOUBLE, nullptr, Engine::GetRenderTimeMsCB, Engine::current(), " precision=2 ");
+		TwAddVarRW(m_tweak_bar, "Voxel Storage Mode", voxelStorageModeTWType, &m_voxel_storage_mode, "");
+		TwAddVarRW(m_tweak_bar, "NV Conservative Raster", TW_TYPE_BOOLCPP, &m_enable_conservative_raster, nullptr);
 	}
 
 	Voxelizer::~Voxelizer()
@@ -38,7 +40,16 @@ namespace e186
 	void Voxelizer::Voxelize(std::unique_ptr<Model>& sourceMeshModel, int voxelGridResolution)
 	{
 		// TODO IMPLEMENT
+
 		std::cout << "Voxelizer::Voxelize(const Model &sourceMeshModel) not yet fully implemented." << std::endl;
+
+		if (m_enable_conservative_raster) {
+			glEnable(GL_CONSERVATIVE_RASTERIZATION_NV);
+			std::cout << "GL_CONSERVATIVE_RASTERIZATION_NV enabled: " << (glIsEnabled(GL_CONSERVATIVE_RASTERIZATION_NV) == true ? "yes" : "no") << std::endl;
+		}
+
+		exit(0);
+		return;
 
 		m_voxel_grid_resolution = voxelGridResolution;
 
@@ -88,6 +99,8 @@ namespace e186
 		RenderMeshesWithAlignedUniformSetters(m_mesh_to_voxel_rasterization_shader, render_data, unisetters);
 
 		UnbindVAO();
+
+		glDisable(GL_CONSERVATIVE_RASTERIZATION_NV);
 	}
 
 	void Voxelizer::RenderVoxelGrid(const glm::mat4& vM, const glm::mat4& pM)

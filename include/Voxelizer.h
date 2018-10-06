@@ -6,6 +6,8 @@
 #include "Tex3dDisplayer.h"
 #include "FrameBufferObject.h"
 
+
+
 #include "e186.h"
 
 namespace e186
@@ -44,6 +46,11 @@ namespace e186
 		Tex3D m_voxels_tex3D;
 
 		Tex3dDisplayer m_tex3Ddisp;
+
+		// enable NVidia hardware conservative rasterization (OpenGL 4.3+), if available
+		// GL_NV_conservative_raster is defined by GLAD OpenGL loader in external/glad.h
+		// https://developer.nvidia.com/sites/default/files/akamai/opengl/specs/GL_NV_conservative_raster.txt
+		bool m_enable_conservative_raster;
 
 		// Octree data structure for more efficient voxel storage
 		// if OctreeHierarchy enabled, stores result of latest call to Voxelizer::Voxelize()
