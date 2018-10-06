@@ -6,8 +6,8 @@ namespace e186
     Voxelizer::Voxelizer()
 	    : m_tweak_bar(Engine::current()->tweak_bar_manager().create_new_tweak_bar("Voxelizer"))
 	    , m_voxel_storage_mode(VoxelStorageMode::Tex3D)
+	    , m_enable_conservative_raster(false)
 	    , m_voxel_grid_resolution(128)
-	    , m_enable_conservative_raster(true)
 	    , m_tex3Ddisp(m_voxels_tex3D)
 	{
 
@@ -25,12 +25,17 @@ namespace e186
 
 		// SETUP ANTTWEAKBAR
 
-		TwDefine("'Voxelizer' color='26 27 61' text=light position='50 200' ");
+		TwDefine("'Voxelizer' color='26 27 61' text=light position='40 400' ");
 
 		TwType voxelStorageModeTWType = TwDefineEnumFromString("VoxelStorageMode", "Tex3D,OctreeHierarchy");
 		TwAddVarCB(m_tweak_bar, "Render time (ms)", TW_TYPE_DOUBLE, nullptr, Engine::GetRenderTimeMsCB, Engine::current(), " precision=2 ");
 		TwAddVarRW(m_tweak_bar, "Voxel Storage Mode", voxelStorageModeTWType, &m_voxel_storage_mode, "");
+#ifndef GL_CONSERVATIVE_RASTERIZATION_NV
+		m_enable_conservative_raster = true;
 		TwAddVarRW(m_tweak_bar, "NV Conservative Raster", TW_TYPE_BOOLCPP, &m_enable_conservative_raster, nullptr);
+#else
+		TwAddVarRW(m_tweak_bar, "NV Conservative Raster", TW_TYPE_BOOLCPP, &m_enable_conservative_raster, "readonly=true");
+#endif
 	}
 
 	Voxelizer::~Voxelizer()
@@ -48,7 +53,6 @@ namespace e186
 			std::cout << "GL_CONSERVATIVE_RASTERIZATION_NV enabled: " << (glIsEnabled(GL_CONSERVATIVE_RASTERIZATION_NV) == true ? "yes" : "no") << std::endl;
 		}
 
-		exit(0);
 		return;
 
 		m_voxel_grid_resolution = voxelGridResolution;
