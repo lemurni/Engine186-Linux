@@ -21,7 +21,7 @@ namespace e186
 
 		// voxelize the given mesh
 		m_voxelizer = std::unique_ptr<Voxelizer>(new Voxelizer());
-		m_voxelizer->Voxelize(m_voxelize_model, 256);
+		m_voxelizer->Voxelize(m_voxelize_model, 128);
 
 	}
 

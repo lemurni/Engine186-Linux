@@ -30,9 +30,6 @@ flat out int axisOfTriangleProjection; // to restore 3D voxel data in fragment s
 // along axis that maximizes the area of the triangle 2D projection, to minimize information loss
 // after rasterization, the fragment shader computes 3D voxel data from all triangle fragments in the voxel
 
-// another reason why we need the geometry shader is for conservative rasterization
-// TODO
-
 void main() {
 
     mat4 projMat;

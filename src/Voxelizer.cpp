@@ -30,7 +30,7 @@ namespace e186
 		TwType voxelStorageModeTWType = TwDefineEnumFromString("VoxelStorageMode", "Tex3D,OctreeHierarchy");
 		TwAddVarCB(m_tweak_bar, "Render time (ms)", TW_TYPE_DOUBLE, nullptr, Engine::GetRenderTimeMsCB, Engine::current(), " precision=2 ");
 		TwAddVarRW(m_tweak_bar, "Voxel Storage Mode", voxelStorageModeTWType, &m_voxel_storage_mode, "");
-#ifndef GL_CONSERVATIVE_RASTERIZATION_NV
+#ifdef GL_CONSERVATIVE_RASTERIZATION_NV
 		m_enable_conservative_raster = true;
 		TwAddVarRW(m_tweak_bar, "NV Conservative Raster", TW_TYPE_BOOLCPP, &m_enable_conservative_raster, nullptr);
 #else
@@ -53,13 +53,11 @@ namespace e186
 			std::cout << "GL_CONSERVATIVE_RASTERIZATION_NV enabled: " << (glIsEnabled(GL_CONSERVATIVE_RASTERIZATION_NV) == true ? "yes" : "no") << std::endl;
 		}
 
-		return;
-
 		m_voxel_grid_resolution = voxelGridResolution;
 
 		// SETUP TARGET DATA STRUCTURES
 
-		m_voxels_tex3D.GenerateEmpty(m_voxel_grid_resolution, m_voxel_grid_resolution, m_voxel_grid_resolution);
+		m_voxels_tex3D.GenerateEmpty(m_voxel_grid_resolution, m_voxel_grid_resolution, m_voxel_grid_resolution).Upload().BindAndSetTextureParameters(TexParams::NearestFiltering);
 
 		// SETUP SHADER
 
@@ -79,7 +77,8 @@ namespace e186
 		m_mesh_to_voxel_rasterization_shader.SetUniform("uViewProjMatOrthoZ", viewProjMatOrthoZ);
 		m_mesh_to_voxel_rasterization_shader.SetUniform("uVoxelGridResolution", static_cast<int>(m_voxel_grid_resolution));
 		m_mesh_to_voxel_rasterization_shader.SetImageTexture("uVoxelDiffuseReflectivity", m_voxels_tex3D, 0, 0, false, 0, GL_WRITE_ONLY);
-		m_mesh_to_voxel_rasterization_shader.SetImageTexture("uVoxelNormal", m_voxels_tex3D, 1, 0, false, 0, GL_WRITE_ONLY);
+		//m_mesh_to_voxel_rasterization_shader.SetImageTexture("uVoxelNormal", m_voxels_tex3D, 1, 0, false, 0, GL_WRITE_ONLY);
+
 
 		// select meshes to render
 		auto meshes = sourceMeshModel->SelectAllMeshes();
@@ -100,7 +99,9 @@ namespace e186
 		// set the viewport pixel width and height to the size of the voxel grid
 		glViewport(0, 0, m_voxel_grid_resolution, m_voxel_grid_resolution);
 
-		RenderMeshesWithAlignedUniformSetters(m_mesh_to_voxel_rasterization_shader, render_data, unisetters);
+		//RenderMesh(m_mesh_to_voxel_rasterization_shader, sourceMeshModel->SelectAllMeshes().at(0));
+
+		std::cout << "Voxelizer::Voxelize got so far" << std::endl;
 
 		UnbindVAO();
 

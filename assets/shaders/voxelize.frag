@@ -1,7 +1,7 @@
 // output voxel data 3D textures using image load/store interface
 // TODO use other formats depending on data, rgba8 for color, rgba16f for normals
-layout(binding = 0, rgba32f) uniform image3D uVoxelDiffuseReflectivity;
-layout(binding = 1, rgba32f) uniform image3D uVoxelNormal;
+layout(binding = 0, rgba16f) uniform image3D uVoxelDiffuseReflectivity;
+layout(binding = 1, rgba16f) uniform image3D uVoxelNormal;
 
 // model data
 layout(location = 140) uniform vec2 uTexCoordsScale = vec2(1, 1);
@@ -66,9 +66,7 @@ void main()
 
     imageStore(uVoxelDiffuseReflectivity, voxelCoord, vec4(diff_tex_color, 1.0));
 
-
-
-    imageStore(uVoxelNormal, voxelCoord, vec4(v_in.normalMS, 0.0));
+    //imageStore(uVoxelNormal, voxelCoord, vec4(v_in.normalMS, 0.0));
 
 
 }
