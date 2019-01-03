@@ -75,8 +75,10 @@ namespace e186
 		m_mesh_to_voxel_rasterization_shader.SetUniform("uViewProjMatOrthoX", viewProjMatOrthoX);
 		m_mesh_to_voxel_rasterization_shader.SetUniform("uViewProjMatOrthoY", viewProjMatOrthoY);
 		m_mesh_to_voxel_rasterization_shader.SetUniform("uViewProjMatOrthoZ", viewProjMatOrthoZ);
-		m_mesh_to_voxel_rasterization_shader.SetUniform("uVoxelGridResolution", static_cast<int>(m_voxel_grid_resolution));
-		m_mesh_to_voxel_rasterization_shader.SetImageTexture("uVoxelDiffuseReflectivity", m_voxels_tex3D, 0, 0, false, 0, GL_WRITE_ONLY);
+		m_mesh_to_voxel_rasterization_shader.SetUniform("uGridSizeX", static_cast<int>(m_voxel_grid_resolution));
+		m_mesh_to_voxel_rasterization_shader.SetUniform("uGridSizeY", static_cast<int>(m_voxel_grid_resolution));
+		m_mesh_to_voxel_rasterization_shader.SetUniform("uGridSizeZ", static_cast<int>(m_voxel_grid_resolution));
+		m_mesh_to_voxel_rasterization_shader.SetImageTexture("uVoxelDiffuseColor", m_voxels_tex3D, 0, 0, false, 0, GL_WRITE_ONLY);
 		//m_mesh_to_voxel_rasterization_shader.SetImageTexture("uVoxelNormal", m_voxels_tex3D, 1, 0, false, 0, GL_WRITE_ONLY);
 
 
@@ -99,7 +101,7 @@ namespace e186
 		// set the viewport pixel width and height to the size of the voxel grid
 		glViewport(0, 0, m_voxel_grid_resolution, m_voxel_grid_resolution);
 
-		//RenderMesh(m_mesh_to_voxel_rasterization_shader, sourceMeshModel->SelectAllMeshes().at(0));
+		RenderMesh(m_mesh_to_voxel_rasterization_shader, sourceMeshModel->SelectAllMeshes().at(0));
 
 		std::cout << "Voxelizer::Voxelize got so far" << std::endl;
 

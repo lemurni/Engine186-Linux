@@ -10,15 +10,12 @@ uniform int uVoxelGridResolution; // used for x, y, z
 in VertexData
 {
     vec2 texCoords;
-    vec3 positionMS; // vertex position in model space
-    vec3 normalMS;   // vertex normal in model space
 } v_in[];
 
 out VertexData
 {
+    vec3 faceNormal;
     vec2 texCoords;
-    vec3 positionMS;
-    vec3 normalMS;
 } v_out;
 
 flat out int axisOfTriangleProjection; // to restore 3D voxel data in fragment shader, flat to avoid interpolation
@@ -32,17 +29,23 @@ flat out int axisOfTriangleProjection; // to restore 3D voxel data in fragment s
 
 void main() {
 
+    vec4 pos[3]; // triangle verts
+    pos[0] = gl_in[0].gl_Position;
+    pos[1] = gl_in[1].gl_Position;
+    pos[2] = gl_in[2].gl_Position;
+
     mat4 projMat;
 
-    // determine in which coordinate axis the triangle normal is facing the most
-    // to find the projection axis that yields the maximum projected area
-    vec3 N = normalize(v_in[0].normalMS);
-    if (abs(N.x) > abs(N.y) && abs(N.x) > abs(N.z))
+    // determine which coordinate axis the triangle normal is facing most
+    // to use as projection axis that yields maximum projected area
+    vec3 N = cross(pos[1].xyz - pos[0].xyz, pos[2].xyz - pos[0].xyz);
+    vec3 absN = abs(N);
+    if (absN.x > absN.y && absN.x > absN.z)
     {
         axisOfTriangleProjection = 0;
         projMat = uViewProjMatOrthoX;
     }
-    else if (abs(N.y) > abs(N.x) && abs(N.y) > abs(N.z))
+    else if (absN.y > absN.x && absN.y > absN.z)
     {
         axisOfTriangleProjection = 1;
         projMat = uViewProjMatOrthoY;
@@ -55,19 +58,12 @@ void main() {
 
     // project triangle vertices to normalized device coordinates
     // using orthographic projection (no perspective divide)
-
-    vec4 positions[3];
-    positions[0] = projMat * gl_in[0].gl_Position;
-    positions[1] = projMat * gl_in[1].gl_Position;
-    positions[2] = projMat * gl_in[2].gl_Position;
-
-    // store vertex data
+    // and store vertex data
 
     for (int i = 0; i < 3; ++i)
     {
-        gl_Position = positions[i];
-        v_out.positionMS = positions[i].xyz;
-        v_out.normalMS = v_in[i].normalMS;
+        gl_Position = projMat * pos[i];
+        v_out.faceNormal = mat3(projMat) * N;
         v_out.texCoords = v_in[i].texCoords;
         EmitVertex();
     }
