@@ -7,7 +7,6 @@ namespace e186
 	    : m_tweak_bar(Engine::current()->tweak_bar_manager().create_new_tweak_bar("Voxelizer"))
 	    , m_voxel_storage_mode(VoxelStorageMode::Tex3D)
 	    , m_enable_conservative_raster(false)
-	    , m_voxel_grid_resolution(128)
 	    , m_tex3Ddisp(m_voxels_tex3D)
 	{
 
@@ -42,7 +41,7 @@ namespace e186
 	{
 	}
 
-	void Voxelizer::Voxelize(std::unique_ptr<Model>& sourceMeshModel, int voxelGridResolution)
+	void Voxelizer::Voxelize(std::unique_ptr<Model>& sourceMeshModel, const glm::vec3& gridSize)
 	{
 		// TODO IMPLEMENT
 
@@ -53,31 +52,44 @@ namespace e186
 			std::cout << "GL_CONSERVATIVE_RASTERIZATION_NV enabled: " << (glIsEnabled(GL_CONSERVATIVE_RASTERIZATION_NV) == true ? "yes" : "no") << std::endl;
 		}
 
-		m_voxel_grid_resolution = voxelGridResolution;
-
 		// SETUP TARGET DATA STRUCTURES
 
-		m_voxels_tex3D.GenerateEmpty(m_voxel_grid_resolution, m_voxel_grid_resolution, m_voxel_grid_resolution).Upload().BindAndSetTextureParameters(TexParams::NearestFiltering);
+		m_voxels_tex3D.GenerateEmpty(gridSize.x, gridSize.y, gridSize.z).Upload().BindAndSetTextureParameters(TexParams::NearestFiltering);
 
 		// SETUP SHADER
 
+		// set the viewport pixel width and height to the size of the voxel grid
+		glViewport(0, 0, m_voxels_tex3D.width(), m_voxels_tex3D.height());
+
 		// predefine axis-aligned orthograhic view-projection matrices for geometry shader
 		// note glm::ortho, i.e. the 'classical' orthographic projection matrix just maps to normalized device coords
-		// i.e. scales and translates a defined cube of clipping planes to the unit cube (no perspective divide needed)
+		// i.e. scales and translates a cube of size of voxel grid to unit cube (no perspective divide needed)
 		// the actual 'flattening' is done by the hardware since result is a 2D buffer, z value ends up in zbuffer
-		// we use three different with view matrices looking at unit cube from the three coordinate axes
-		glm::mat4 orthoProjMat = glm::ortho<float>(-1, 1, -1, 1); // left, right, bottom, top clip planes
-		glm::mat4 viewProjMatOrthoX = orthoProjMat * glm::lookAt<float>(glm::vec3(2, 0, 0), glm::vec3(0, 0, 0), glm::vec3(0, 1, 0)); // eye, target, up vector
-		glm::mat4 viewProjMatOrthoY = orthoProjMat * glm::lookAt<float>(glm::vec3(0, 2, 0), glm::vec3(0, 0, 0), glm::vec3(0, 0, -1)); // up vector shouldnt be parallel to eye
-		glm::mat4 viewProjMatOrthoZ = orthoProjMat * glm::lookAt<float>(glm::vec3(0, 0, 2), glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
+		// glm::ortho takes left, right, bottom, top clip planes
+		float half_w = m_voxels_tex3D.width()/2.f;
+		float half_h = m_voxels_tex3D.height()/2.f;
+		float half_d = m_voxels_tex3D.height()/2.f;
+		glm::mat4 orthoProjMat = glm::ortho<float>(-half_w, half_w,
+		                                           -half_h, half_h,
+		                                           0.0f, 2.f * half_d);
+		// we use three different with view matrices looking at unit cube in direction X, Y and Z
+		glm::mat4 viewMatX = glm::lookAt<float>(glm::vec3(-half_w, 0, 0), // eye
+		                                        glm::vec3(0, 0, 0),       // target
+		                                        glm::vec3(0, 1, 0));      // up
+		glm::mat4 viewMatY = glm::lookAt<float>(glm::vec3(0, -half_h, 0),
+		                                        glm::vec3(0, 0, 0),
+		                                        glm::vec3(0, 0, 1)); // up vector shouldnt be parallel to eye
+		glm::mat4 viewMatZ = glm::lookAt<float>(glm::vec3(0, 0, -half_d),
+		                                        glm::vec3(0, 0, 0),
+		                                        glm::vec3(0, 1, 0));
 
 		m_mesh_to_voxel_rasterization_shader.Use();
-		m_mesh_to_voxel_rasterization_shader.SetUniform("uViewProjMatOrthoX", viewProjMatOrthoX);
-		m_mesh_to_voxel_rasterization_shader.SetUniform("uViewProjMatOrthoY", viewProjMatOrthoY);
-		m_mesh_to_voxel_rasterization_shader.SetUniform("uViewProjMatOrthoZ", viewProjMatOrthoZ);
-		m_mesh_to_voxel_rasterization_shader.SetUniform("uGridSizeX", static_cast<int>(m_voxel_grid_resolution));
-		m_mesh_to_voxel_rasterization_shader.SetUniform("uGridSizeY", static_cast<int>(m_voxel_grid_resolution));
-		m_mesh_to_voxel_rasterization_shader.SetUniform("uGridSizeZ", static_cast<int>(m_voxel_grid_resolution));
+		m_mesh_to_voxel_rasterization_shader.SetUniform("uViewProjMatOrthoX", orthoProjMat * viewMatX);
+		m_mesh_to_voxel_rasterization_shader.SetUniform("uViewProjMatOrthoY", orthoProjMat * viewMatY);
+		m_mesh_to_voxel_rasterization_shader.SetUniform("uViewProjMatOrthoZ", orthoProjMat * viewMatZ);
+		m_mesh_to_voxel_rasterization_shader.SetUniform("uGridSizeX", static_cast<int>(m_voxels_tex3D.width()));
+		m_mesh_to_voxel_rasterization_shader.SetUniform("uGridSizeY", static_cast<int>(m_voxels_tex3D.height()));
+		m_mesh_to_voxel_rasterization_shader.SetUniform("uGridSizeZ", static_cast<int>(m_voxels_tex3D.depth()));
 		m_mesh_to_voxel_rasterization_shader.SetImageTexture("uVoxelDiffuseColor", m_voxels_tex3D, 0, 0, false, 0, GL_WRITE_ONLY);
 		//m_mesh_to_voxel_rasterization_shader.SetImageTexture("uVoxelNormal", m_voxels_tex3D, 1, 0, false, 0, GL_WRITE_ONLY);
 
@@ -97,9 +109,6 @@ namespace e186
 		glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE); // dont write to framebuffer, we use image load/store instead
 		glDisable(GL_CULL_FACE); // we dont want to discard triangles facing a certain direction
 		glDisable(GL_DEPTH_TEST); // we dont want to discard fragments that are behind others
-
-		// set the viewport pixel width and height to the size of the voxel grid
-		glViewport(0, 0, m_voxel_grid_resolution, m_voxel_grid_resolution);
 
 		RenderMesh(m_mesh_to_voxel_rasterization_shader, sourceMeshModel->SelectAllMeshes().at(0));
 

@@ -39,8 +39,6 @@ namespace e186
 		// shader for the gpu rasterizer based voxelization
 		Shader m_mesh_to_voxel_rasterization_shader;
 
-		int m_voxel_grid_resolution;
-
 		// OpenGL 3D Texture to store voxels in regular grid
 		// if RegularGridTex3D enabled, stores result of latest call to Voxelizer::Voxelize()
 		Tex3D m_voxels_tex3D;
@@ -64,7 +62,7 @@ namespace e186
 
 		// voxelize the given mesh and store the result in a data structure
 		// the resulting data structure is determined by m_voxel_storage_mode
-		void Voxelize(std::unique_ptr<Model> &sourceMeshModel, int voxelGridResolution);
+		void Voxelize(std::unique_ptr<Model>& sourceMeshModel, const glm::vec3& gridSize);
 
 		// visualize the voxels
 		void RenderVoxelGrid(const glm::mat4 &vM, const glm::mat4 &pM);
