@@ -10,17 +10,21 @@ namespace e186
 	    , m_tex3Ddisp(m_voxels_tex3D)
 	{
 
-		std::cout << "Voxelizer::Voxelizer() 3D texture generate test data" << std::endl;
+		// GENERATE TEST DATA
+
+
+		std::cout << "Voxelizer Generate Test Data" << std::endl;
+		//m_voxels_tex3D.GenerateEmpty(gridSize.x, gridSize.y, gridSize.z).Upload().BindAndSetTextureParameters(TexParams::NearestFiltering);
 		m_voxels_tex3D.GenerateLDRTestData(128, 128, 128).Upload().BindAndSetTextureParameters(TexParams::NearestFiltering);
 
 		// BUILD SHADER PROGRAMS
 
-		m_mesh_to_voxel_rasterization_shader
-			.AddToMultipleShaderSources(Shader::version_string(), ShaderType::Vertex | ShaderType::Geometry | ShaderType::Fragment)
-			.AddVertexShaderSourceFromFile("assets/shaders/voxelize.vert")
-			.AddGeometryShaderSourceFromFile("assets/shaders/voxelize.geom")
-			.AddFragmentShaderSourceFromFile("assets/shaders/voxelize.frag")
-			.Build();
+		m_voxelize_shader
+		    .AddToMultipleShaderSources(Shader::version_string(), ShaderType::Vertex | ShaderType::Geometry | ShaderType::Fragment)
+		    .AddVertexShaderSourceFromFile("assets/shaders/voxelize.vert")
+		    .AddGeometryShaderSourceFromFile("assets/shaders/voxelize.geom")
+		    .AddFragmentShaderSourceFromFile("assets/shaders/voxelize.frag")
+		    .Build();
 
 		// SETUP ANTTWEAKBAR
 
@@ -41,20 +45,15 @@ namespace e186
 	{
 	}
 
-	void Voxelizer::Voxelize(std::unique_ptr<Model>& sourceMeshModel, const glm::vec3& gridSize)
+	void Voxelizer::Voxelize(Model& sourceMeshModel, const glm::vec3& gridSize)
 	{
-		// TODO IMPLEMENT
-
-		std::cout << "Voxelizer::Voxelize(const Model &sourceMeshModel) not yet fully implemented." << std::endl;
+		// TODO FIX CRASHES
+		std::cout << "Voxelizer::Voxelize not yet fully implemented." << std::endl;
 
 		if (m_enable_conservative_raster) {
 			glEnable(GL_CONSERVATIVE_RASTERIZATION_NV);
 			std::cout << "GL_CONSERVATIVE_RASTERIZATION_NV enabled: " << (glIsEnabled(GL_CONSERVATIVE_RASTERIZATION_NV) == true ? "yes" : "no") << std::endl;
 		}
-
-		// SETUP TARGET DATA STRUCTURES
-
-		m_voxels_tex3D.GenerateEmpty(gridSize.x, gridSize.y, gridSize.z).Upload().BindAndSetTextureParameters(TexParams::NearestFiltering);
 
 		// SETUP SHADER
 
@@ -83,47 +82,43 @@ namespace e186
 		                                        glm::vec3(0, 0, 0),
 		                                        glm::vec3(0, 1, 0));
 
-		m_mesh_to_voxel_rasterization_shader.Use();
-		m_mesh_to_voxel_rasterization_shader.SetUniform("uViewProjMatOrthoX", orthoProjMat * viewMatX);
-		m_mesh_to_voxel_rasterization_shader.SetUniform("uViewProjMatOrthoY", orthoProjMat * viewMatY);
-		m_mesh_to_voxel_rasterization_shader.SetUniform("uViewProjMatOrthoZ", orthoProjMat * viewMatZ);
-		m_mesh_to_voxel_rasterization_shader.SetUniform("uGridSizeX", static_cast<int>(m_voxels_tex3D.width()));
-		m_mesh_to_voxel_rasterization_shader.SetUniform("uGridSizeY", static_cast<int>(m_voxels_tex3D.height()));
-		m_mesh_to_voxel_rasterization_shader.SetUniform("uGridSizeZ", static_cast<int>(m_voxels_tex3D.depth()));
-		m_mesh_to_voxel_rasterization_shader.SetImageTexture("uVoxelDiffuseColor", m_voxels_tex3D, 0, 0, false, 0, GL_WRITE_ONLY);
+		m_voxelize_shader.Use();
+		m_voxelize_shader.SetUniform("uViewProjMatOrthoX", orthoProjMat * viewMatX);
+		m_voxelize_shader.SetUniform("uViewProjMatOrthoY", orthoProjMat * viewMatY);
+		m_voxelize_shader.SetUniform("uViewProjMatOrthoZ", orthoProjMat * viewMatZ);
+		m_voxelize_shader.SetUniform("uGridSizeX", static_cast<int>(m_voxels_tex3D.width()));
+		m_voxelize_shader.SetUniform("uGridSizeY", static_cast<int>(m_voxels_tex3D.height()));
+		m_voxelize_shader.SetUniform("uGridSizeZ", static_cast<int>(m_voxels_tex3D.depth()));
+		m_voxelize_shader.SetImageTexture("uVoxelDiffuseColor", m_voxels_tex3D, 0, 0, false, 0, GL_WRITE_ONLY);
 		//m_mesh_to_voxel_rasterization_shader.SetImageTexture("uVoxelNormal", m_voxels_tex3D, 1, 0, false, 0, GL_WRITE_ONLY);
 
-
 		// select meshes to render
-		auto meshes = sourceMeshModel->SelectAllMeshes();
+		auto meshes = sourceMeshModel.SelectAllMeshes();
 		// generate uniform setters for selected meshes for a specific shader
-		auto unisetters = Model::CompileUniformSetters(m_mesh_to_voxel_rasterization_shader, meshes);
+		auto unisetters = Model::CompileUniformSetters(m_voxelize_shader, meshes);
 		// get VAOs of all selected meshes
-		auto render_data = Model::GetOrCreateRenderData(m_mesh_to_voxel_rasterization_shader, meshes);
+		auto render_data = Model::GetOrCreateRenderData(m_voxelize_shader, meshes);
 
 		// DRAW
 
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		// disable unwanted OpenGL functions
 		glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE); // dont write to framebuffer, we use image load/store instead
 		glDisable(GL_CULL_FACE); // we dont want to discard triangles facing a certain direction
 		glDisable(GL_DEPTH_TEST); // we dont want to discard fragments that are behind others
 
-		RenderMesh(m_mesh_to_voxel_rasterization_shader, sourceMeshModel->SelectAllMeshes().at(0));
-
-		std::cout << "Voxelizer::Voxelize got so far" << std::endl;
+		std::cout << "Voxelizer::Voxelize RenderMesh with voxelize shader" << std::endl;
+		RenderMesh(m_voxelize_shader, sourceMeshModel.mesh_at(0));
+		std::cout << "Voxelizer::Voxelize finished voxelization shader" << std::endl;
 
 		UnbindVAO();
-
+		glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 		glDisable(GL_CONSERVATIVE_RASTERIZATION_NV);
 	}
 
 	void Voxelizer::RenderVoxelGrid(const glm::mat4& vM, const glm::mat4& pM)
 	{
-
 		m_tex3Ddisp.Render(glm::scale(glm::vec3(0.1f, 0.1f, 0.1f)), vM, pM);
-
 	}
 
 

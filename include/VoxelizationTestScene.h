@@ -21,10 +21,10 @@ namespace e186
 
 		bool m_termination_requested;
 
-		std::unique_ptr<Voxelizer> m_voxelizer;
-		std::unique_ptr<Model> m_voxelize_model;
+		std::unique_ptr<Model> m_model_sphere;
+		std::unique_ptr<Model> m_model_sponza;
 
-		std::unique_ptr<Model> m_scene_model;
+		std::unique_ptr<Voxelizer> m_voxelizer;
 	};
 
 }
