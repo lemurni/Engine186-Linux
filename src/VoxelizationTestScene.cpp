@@ -11,18 +11,6 @@ namespace e186
     VoxelizationTestScene::VoxelizationTestScene()
 	    : m_termination_requested(false)
 	{
-
-		m_scene_model = Model::LoadFromFile("assets/models/sponza/sponza_structure.obj", glm::scale(glm::vec3(.01f, .01f, .01f)), MOLF_default);
-		assert(m_scene_model);
-		m_scene_model->CreateAndUploadGpuData();
-
-		m_voxelize_model = Model::LoadFromFile("assets/models/sphere.obj", glm::scale(glm::vec3(1.f, 1.f, 1.f)), MOLF_default);
-		assert(m_voxelize_model);
-
-		// voxelize the given mesh
-		m_voxelizer = std::unique_ptr<Voxelizer>(new Voxelizer());
-		m_voxelizer->Voxelize(m_voxelize_model, glm::vec3(128, 128, 128));
-
 	}
 
 
@@ -37,6 +25,24 @@ namespace e186
 
 	void VoxelizationTestScene::Run()
 	{
+		// LOAD AND VOXELIZE A MODEL
+
+		m_voxelizer = std::unique_ptr<Voxelizer>(new Voxelizer());
+		assert(m_voxelizer);
+
+		m_model_sphere = Model::LoadFromFile("assets/models/sphere.obj", glm::scale(glm::vec3(1.f, 1.f, 1.f)), MOLF_default);
+		assert(m_model_sphere);
+
+		m_voxelizer->Voxelize(*m_model_sphere, glm::vec3(128, 128, 128));
+
+		auto& tM = m_model_sponza->transformation_matrix();
+
+		// SETUP SCENE
+
+		m_model_sponza = Model::LoadFromFile("assets/models/sponza/sponza_structure.obj", glm::scale(glm::vec3(.01f, .01f, .01f)), MOLF_default);
+		assert(m_model_sponza);
+		m_model_sponza->CreateAndUploadGpuData();
+
 		// shader to draw scene
 		Shader scene_shader;
 		scene_shader.AddToMultipleShaderSources(Shader::version_string(), ShaderType::Vertex | ShaderType::Fragment)
@@ -48,7 +54,7 @@ namespace e186
 			  .Build();
 
 		// select some meshes which we intend to render
-		auto meshes = m_scene_model->SelectAllMeshes();
+		auto meshes = m_model_sponza->SelectAllMeshes();
 		// generate uniform setters for all selected meshes for a specific shader
 		auto unisetters = Model::CompileUniformSetters(scene_shader, meshes);
 		// get VAOs of all selected meshes
@@ -80,8 +86,6 @@ namespace e186
 		glFrontFace(GL_CCW);
 		glDisable(GL_BLEND);
 
-		auto& tM = m_scene_model->transformation_matrix();
-
 		while (!m_termination_requested)
 		{
 			// BEGIN FRAME
@@ -103,7 +107,7 @@ namespace e186
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 			scene_shader.Use();
-			scene_shader.SetAutoMatrices(m_scene_model->transformation_matrix(), glm::mat4(1.0f), vM, pM);
+			scene_shader.SetAutoMatrices(m_model_sponza->transformation_matrix(), glm::mat4(1.0f), vM, pM);
 			scene_shader.SetLight("uAmbientLight", ambient_light);
 			scene_shader.SetLight("uDirectionalLight", directional_light.GetGpuData(vM));
 			scene_shader.SetLight("uPointLight", point_light.GetGpuData(vM));
