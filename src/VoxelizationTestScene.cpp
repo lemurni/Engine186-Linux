@@ -35,13 +35,8 @@ namespace e186
 
 		m_voxelizer->Voxelize(*m_model_sphere, glm::vec3(128, 128, 128));
 
-		auto& tM = m_model_sponza->transformation_matrix();
 
 		// SETUP SCENE
-
-		m_model_sponza = Model::LoadFromFile("assets/models/sponza/sponza_structure.obj", glm::scale(glm::vec3(.01f, .01f, .01f)), MOLF_default);
-		assert(m_model_sponza);
-		m_model_sponza->CreateAndUploadGpuData();
 
 		// shader to draw scene
 		Shader scene_shader;
@@ -53,12 +48,16 @@ namespace e186
 			  .DeclareAutoMatrix("vmNormalMatrix", AutoMatrix::ViewMatrix | AutoMatrix::ModelMatrix | AutoMatrix::TransformMatrix | AutoMatrix::IsNormalMatrix)
 			  .Build();
 
-		// select some meshes which we intend to render
+		// scene models
+
+		m_model_sponza = Model::LoadFromFile("assets/models/sponza/sponza_structure.obj", glm::scale(glm::vec3(.01f, .01f, .01f)), MOLF_default);
+		assert(m_model_sponza);
+		m_model_sponza->CreateAndUploadGpuData(); // upload vertex pos to vertex array buffer and vertex indices to element array buffer
 		auto meshes = m_model_sponza->SelectAllMeshes();
-		// generate uniform setters for all selected meshes for a specific shader
 		auto unisetters = Model::CompileUniformSetters(scene_shader, meshes);
-		// get VAOs of all selected meshes
 		auto render_data = Model::GetOrCreateRenderData(scene_shader, meshes);
+
+		// lights
 
 		AmbientLight ambient_light(glm::vec3(0.1f, 0.1f, 0.1f));
 		ambient_light.set_enabled(true);
@@ -69,16 +68,16 @@ namespace e186
 		PointLight point_light(glm::vec3(0.5f, 0.5f, 0.5f), glm::vec3(0.0f, 0.0f, 0.0f));
 		point_light.set_enabled(false);
 
-		// create a camera for view and projection matrices:
+		// camera
 		QuakeCamera cam;
 		cam.set_position(glm::vec3(0.0f, 0.0f, 0.0f));
-		cam.LookAlong(glm::vec3(0.0f, 0.0f, -1.0f));
+		cam.LookAlong(glm::vec3(0.0, 0.0f, -1.0f));
 		cam.SetPerspectiveProjection(20.0f, Engine::current()->aspect_ratio(), 1.0f, 5000.0f);
 
-		// create a timer
+		// timer
 		MaxFpsTimer timer;
 
-		// Set reasonable GL-states before we start
+		// GL states before we start
 		glDepthMask(GL_TRUE);
 		glEnable(GL_DEPTH_TEST);
 		glDepthFunc(GL_LESS);
@@ -88,11 +87,11 @@ namespace e186
 
 		while (!m_termination_requested)
 		{
-			// BEGIN FRAME
-
-			std::cout << "FRAME BEGIN" << std::endl;
-
+			//std::cout << "FRAME BEGIN" << std::endl;
 			Engine::current()->BeginFrame();
+
+			// UPDATE
+
 			timer.Tick();
 
 			cam.Update(timer.delta_time());
@@ -114,20 +113,13 @@ namespace e186
 			RenderMeshesWithAlignedUniformSetters(scene_shader, render_data, unisetters);
 			UnbindVAO();
 
-			std::cout << "Finished Drawing Scene" << std::endl;
-
 			// DRAW VOXEL GRID
 
 			m_voxelizer->RenderVoxelGrid(vM, pM);
 			UnbindVAO();
 
-			std::cout << "Finished Drawing Voxel Grid" << std::endl;
-
-			// END FRAME
-
 			Engine::current()->EndFrame();
-
-			std::cout << "FRAME ENDED" << std::endl;
+			//std::cout << "FRAME END" << std::endl;
 		}
 	}
 }

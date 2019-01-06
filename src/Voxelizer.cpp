@@ -12,12 +12,11 @@ namespace e186
 
 		// GENERATE TEST DATA
 
-
 		std::cout << "Voxelizer Generate Test Data" << std::endl;
 		//m_voxels_tex3D.GenerateEmpty(gridSize.x, gridSize.y, gridSize.z).Upload().BindAndSetTextureParameters(TexParams::NearestFiltering);
 		m_voxels_tex3D.GenerateLDRTestData(128, 128, 128).Upload().BindAndSetTextureParameters(TexParams::NearestFiltering);
 
-		// BUILD SHADER PROGRAMS
+		// BUILD SHADER PROGRAM
 
 		m_voxelize_shader
 		    .AddToMultipleShaderSources(Shader::version_string(), ShaderType::Vertex | ShaderType::Geometry | ShaderType::Fragment)
@@ -45,20 +44,9 @@ namespace e186
 	{
 	}
 
-	void Voxelizer::Voxelize(Model& sourceMeshModel, const glm::vec3& gridSize)
+	void Voxelizer::Voxelize(Model& model, const glm::vec3& gridSize)
 	{
-		// TODO FIX CRASHES
-		std::cout << "Voxelizer::Voxelize not yet fully implemented." << std::endl;
-
-		if (m_enable_conservative_raster) {
-			glEnable(GL_CONSERVATIVE_RASTERIZATION_NV);
-			std::cout << "GL_CONSERVATIVE_RASTERIZATION_NV enabled: " << (glIsEnabled(GL_CONSERVATIVE_RASTERIZATION_NV) == true ? "yes" : "no") << std::endl;
-		}
-
-		// SETUP SHADER
-
-		// set the viewport pixel width and height to the size of the voxel grid
-		glViewport(0, 0, m_voxels_tex3D.width(), m_voxels_tex3D.height());
+		// SETUP SHADER DATA
 
 		// predefine axis-aligned orthograhic view-projection matrices for geometry shader
 		// note glm::ortho, i.e. the 'classical' orthographic projection matrix just maps to normalized device coords
@@ -90,35 +78,41 @@ namespace e186
 		m_voxelize_shader.SetUniform("uGridSizeY", static_cast<int>(m_voxels_tex3D.height()));
 		m_voxelize_shader.SetUniform("uGridSizeZ", static_cast<int>(m_voxels_tex3D.depth()));
 		m_voxelize_shader.SetImageTexture("uVoxelDiffuseColor", m_voxels_tex3D, 0, 0, false, 0, GL_WRITE_ONLY);
-		//m_mesh_to_voxel_rasterization_shader.SetImageTexture("uVoxelNormal", m_voxels_tex3D, 1, 0, false, 0, GL_WRITE_ONLY);
 
-		// select meshes to render
-		auto meshes = sourceMeshModel.SelectAllMeshes();
-		// generate uniform setters for selected meshes for a specific shader
+		// SETUP MODEL DATA
+
+		model.CreateAndUploadGpuData(); // upload vertex pos to vertex array buffer, indices to element array buffer
+		auto meshes = model.SelectAllMeshes();
 		auto unisetters = Model::CompileUniformSetters(m_voxelize_shader, meshes);
-		// get VAOs of all selected meshes
 		auto render_data = Model::GetOrCreateRenderData(m_voxelize_shader, meshes);
 
-		// DRAW
+		// DRAW (VOXELIZE VIA GPU RASTERIZATION)
 
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE); // dont write to framebuffer, use image load/store instead
+		glDisable(GL_CULL_FACE); // dont discard triangles facing a certain direction
+		glDisable(GL_DEPTH_TEST); // dont discard fragments that are behind others
 
-		glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE); // dont write to framebuffer, we use image load/store instead
-		glDisable(GL_CULL_FACE); // we dont want to discard triangles facing a certain direction
-		glDisable(GL_DEPTH_TEST); // we dont want to discard fragments that are behind others
+		if (m_enable_conservative_raster) {
+			glEnable(GL_CONSERVATIVE_RASTERIZATION_NV);
+			std::cout << "GL_CONSERVATIVE_RASTERIZATION_NV enabled: " << (glIsEnabled(GL_CONSERVATIVE_RASTERIZATION_NV) == true ? "yes" : "no") << std::endl;
+		}
 
-		std::cout << "Voxelizer::Voxelize RenderMesh with voxelize shader" << std::endl;
-		RenderMesh(m_voxelize_shader, sourceMeshModel.mesh_at(0));
-		std::cout << "Voxelizer::Voxelize finished voxelization shader" << std::endl;
+		glViewport(0, 0, m_voxels_tex3D.width(), m_voxels_tex3D.height()); // set viewport to size of voxel grid
+
+		std::cout << "Voxelizer: Attempting to voxelize" << std::endl;
+		RenderMeshesWithAlignedUniformSetters(m_voxelize_shader, render_data, unisetters);
+		std::cout << "Voxelizer: Finished voxelization" << std::endl;
 
 		UnbindVAO();
-		glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+
 		glDisable(GL_CONSERVATIVE_RASTERIZATION_NV);
+		glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 	}
 
 	void Voxelizer::RenderVoxelGrid(const glm::mat4& vM, const glm::mat4& pM)
 	{
-		m_tex3Ddisp.Render(glm::scale(glm::vec3(0.1f, 0.1f, 0.1f)), vM, pM);
+		m_tex3Ddisp.Render(vM, pM); // use m_tex3Ddisp AntTweakBar ui to adjust transform
 	}
 
 

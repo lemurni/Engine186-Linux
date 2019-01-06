@@ -62,7 +62,7 @@ namespace e186
 
 		// voxelize the given mesh and store the result in a data structure
 		// the resulting data structure is determined by m_voxel_storage_mode
-		void Voxelize(Model &sourceMeshModel, const glm::vec3& gridSize);
+		void Voxelize(Model &model, const glm::vec3& gridSize);
 
 		// visualize the voxels
 		void RenderVoxelGrid(const glm::mat4 &vM, const glm::mat4 &pM);
