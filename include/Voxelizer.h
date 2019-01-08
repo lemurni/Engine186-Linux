@@ -34,7 +34,7 @@ namespace e186
 		VoxelStorageMode m_voxel_storage_mode;
 
 		// the mesh model to be voxelized
-		std::unique_ptr<Model> m_source_mesh_model;
+		std::unique_ptr<Model> m_model;
 
 		// shader for the gpu rasterizer based mesh voxelization
 		Shader m_voxelize_shader;
@@ -42,6 +42,9 @@ namespace e186
 		// OpenGL 3D Texture to store voxels in regular grid
 		// if RegularGridTex3D enabled, stores result of latest call to Voxelizer::Voxelize()
 		Tex3D m_voxels_tex3D;
+
+		// scale factor should fit model vertices into unit cube, voxelization only happens in unit cube
+		float m_scale;
 
 		Tex3dDisplayer m_tex3Ddisp;
 
@@ -60,9 +63,10 @@ namespace e186
 		Voxelizer();
 		~Voxelizer();
 
-		// voxelize the given mesh and store the result in a data structure
+		// voxelize the given mesh model and store the result in a data structure
 		// the resulting data structure is determined by m_voxel_storage_mode
 		void Voxelize(Model &model, const glm::vec3& gridSize);
+		void Voxelize(const std::string &modelPath, const glm::vec3 &gridSize);
 
 		// visualize the voxels
 		void RenderVoxelGrid(const glm::mat4 &vM, const glm::mat4 &pM);

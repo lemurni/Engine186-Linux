@@ -30,10 +30,10 @@ namespace e186
 		m_voxelizer = std::unique_ptr<Voxelizer>(new Voxelizer());
 		assert(m_voxelizer);
 
-		m_model_sphere = Model::LoadFromFile("assets/models/sphere.obj", glm::scale(glm::vec3(1.f, 1.f, 1.f)), MOLF_default);
-		assert(m_model_sphere);
+		m_model_for_voxelization = Model::LoadFromFile("assets/models/companion_cube/companion_cube.obj", glm::mat4(1.0f), MOLF_default);
+		assert(m_model_for_voxelization);
 
-		m_voxelizer->Voxelize(*m_model_sphere, glm::vec3(128, 128, 128));
+		m_voxelizer->Voxelize(*m_model_for_voxelization, glm::vec3(128, 128, 128));
 
 
 		// SETUP SCENE
@@ -102,7 +102,7 @@ namespace e186
 
 			// draw scene to back buffer
 			glViewport(0, 0, Engine::current()->window_width(), Engine::current()->window_height());
-			glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
+			glClearColor(0.3f, 0.6f, 1.0f, 1.0f);
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 			scene_shader.Use();

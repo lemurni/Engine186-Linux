@@ -1,13 +1,12 @@
-// output voxel data 3D textures using image load/store interface
-// TODO use other formats depending on data, rgba8 for color, rgba16f for normals
+// store voxels in 3D texture using image load/store
 layout(binding = 0, rgba16f) uniform image3D uVoxelDiffuseColor;
-layout(binding = 1, rgba16f) uniform image3D uVoxelNormal;
 
-// model data
+// model data for sampling at voxels
 layout(location = 140) uniform vec2 uTexCoordsScale = vec2(1, 1);
 layout(location = 110) uniform vec3 uDiffuseColor;
 layout(location = 120) uniform sampler2D uDiffuseTexSampler;
 
+// voxel grid dimensions
 uniform int uGridSizeX;
 uniform int uGridSizeY;
 uniform int uGridSizeZ;

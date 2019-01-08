@@ -21,7 +21,7 @@ namespace e186
 
 		bool m_termination_requested;
 
-		std::unique_ptr<Model> m_model_sphere;
+		std::unique_ptr<Model> m_model_for_voxelization;
 		std::unique_ptr<Model> m_model_sponza;
 
 		std::unique_ptr<Voxelizer> m_voxelizer;

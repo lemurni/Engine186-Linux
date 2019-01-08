@@ -3,18 +3,18 @@
 namespace e186
 {
 
+    void TW_CALL VoxelizeButtonCallback(void *voxelizerDataVoid);
+
     Voxelizer::Voxelizer()
 	    : m_tweak_bar(Engine::current()->tweak_bar_manager().create_new_tweak_bar("Voxelizer"))
 	    , m_voxel_storage_mode(VoxelStorageMode::Tex3D)
+	    , m_scale(1)
 	    , m_enable_conservative_raster(false)
 	    , m_tex3Ddisp(m_voxels_tex3D)
 	{
 
-		// GENERATE TEST DATA
-
-		std::cout << "Voxelizer Generate Test Data" << std::endl;
-		//m_voxels_tex3D.GenerateEmpty(gridSize.x, gridSize.y, gridSize.z).Upload().BindAndSetTextureParameters(TexParams::NearestFiltering);
-		m_voxels_tex3D.GenerateLDRTestData(128, 128, 128).Upload().BindAndSetTextureParameters(TexParams::NearestFiltering);
+		//std::cout << "Voxelizer Generate Test Data" << std::endl;
+		//m_voxels_tex3D.GenerateLDRTestData(128, 128, 128).Upload().BindAndSetTextureParameters(TexParams::NearestFiltering);
 
 		// BUILD SHADER PROGRAM
 
@@ -29,8 +29,9 @@ namespace e186
 
 		TwDefine("'Voxelizer' color='26 27 61' text=light position='40 400' ");
 
-		TwType voxelStorageModeTWType = TwDefineEnumFromString("VoxelStorageMode", "Tex3D,OctreeHierarchy");
 		TwAddVarCB(m_tweak_bar, "Render time (ms)", TW_TYPE_DOUBLE, nullptr, Engine::GetRenderTimeMsCB, Engine::current(), " precision=2 ");
+
+		TwType voxelStorageModeTWType = TwDefineEnumFromString("VoxelStorageMode", "Tex3D,OctreeHierarchy");
 		TwAddVarRW(m_tweak_bar, "Voxel Storage Mode", voxelStorageModeTWType, &m_voxel_storage_mode, "");
 #ifdef GL_CONSERVATIVE_RASTERIZATION_NV
 		m_enable_conservative_raster = true;
@@ -38,14 +39,36 @@ namespace e186
 #else
 		TwAddVarRW(m_tweak_bar, "NV Conservative Raster", TW_TYPE_BOOLCPP, &m_enable_conservative_raster, "readonly=true");
 #endif
+
+		TwAddVarRW(m_tweak_bar, "Scale", TW_TYPE_FLOAT, &m_scale, "min=0 step=0.1");
+
+		TwAddButton(m_tweak_bar, "Voxelize!", VoxelizeButtonCallback, this, " label='Voxelize!' ");
 	}
 
 	Voxelizer::~Voxelizer()
 	{
 	}
 
+	void TW_CALL VoxelizeButtonCallback(void *voxelizerDataVoid)
+	{
+		Voxelizer *voxelizerData = static_cast<Voxelizer *>(voxelizerDataVoid);
+		voxelizerData->Voxelize("assets/models/companion_cube/companion_cube.obj", glm::vec3(128, 128, 128));
+
+	}
+
+	void Voxelizer::Voxelize(const std::string& modelPath, const glm::vec3& gridSize)
+	{
+		m_model = Model::LoadFromFile(modelPath, glm::mat4(1.0f), MOLF_default);
+		assert(m_model);
+
+		Voxelize(*m_model, gridSize);
+	}
+
 	void Voxelizer::Voxelize(Model& model, const glm::vec3& gridSize)
 	{
+
+		m_voxels_tex3D.GenerateEmpty(gridSize.x, gridSize.y, gridSize.z).Upload().BindAndSetTextureParameters(TexParams::NearestFiltering);
+
 		// SETUP SHADER DATA
 
 		// predefine axis-aligned orthograhic view-projection matrices for geometry shader
@@ -71,13 +94,14 @@ namespace e186
 		                                        glm::vec3(0, 1, 0));
 
 		m_voxelize_shader.Use();
+		m_voxelize_shader.SetUniform("uScaleFactor", m_scale);
 		m_voxelize_shader.SetUniform("uViewProjMatOrthoX", orthoProjMat * viewMatX);
 		m_voxelize_shader.SetUniform("uViewProjMatOrthoY", orthoProjMat * viewMatY);
 		m_voxelize_shader.SetUniform("uViewProjMatOrthoZ", orthoProjMat * viewMatZ);
 		m_voxelize_shader.SetUniform("uGridSizeX", static_cast<int>(m_voxels_tex3D.width()));
 		m_voxelize_shader.SetUniform("uGridSizeY", static_cast<int>(m_voxels_tex3D.height()));
 		m_voxelize_shader.SetUniform("uGridSizeZ", static_cast<int>(m_voxels_tex3D.depth()));
-		m_voxelize_shader.SetImageTexture("uVoxelDiffuseColor", m_voxels_tex3D, 0, 0, false, 0, GL_WRITE_ONLY);
+		m_voxelize_shader.SetImageTexture("uVoxelDiffuseColor", m_voxels_tex3D, 0, 0, false, 0, GL_READ_WRITE); // at shader binding 0
 
 		// SETUP MODEL DATA
 
@@ -98,7 +122,8 @@ namespace e186
 			std::cout << "GL_CONSERVATIVE_RASTERIZATION_NV enabled: " << (glIsEnabled(GL_CONSERVATIVE_RASTERIZATION_NV) == true ? "yes" : "no") << std::endl;
 		}
 
-		glViewport(0, 0, m_voxels_tex3D.width(), m_voxels_tex3D.height()); // set viewport to size of voxel grid
+		// set viewport to size of voxel grid (as many pixels as there are voxels from each unit cube direction
+		glViewport(0, 0, m_voxels_tex3D.width(), m_voxels_tex3D.height());
 
 		std::cout << "Voxelizer: Attempting to voxelize" << std::endl;
 		RenderMeshesWithAlignedUniformSetters(m_voxelize_shader, render_data, unisetters);
