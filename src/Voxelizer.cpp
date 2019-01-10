@@ -9,13 +9,13 @@ namespace e186
 	    : m_tweak_bar(Engine::current()->tweak_bar_manager().create_new_tweak_bar("Voxelizer"))
 	    , m_voxel_storage_mode(VoxelStorageMode::Tex3D)
 	    , m_gridSize(64)
-	    , m_scale(static_cast<float>(m_gridSize-1))
+	    , m_modelScale(static_cast<float>(m_gridSize-1))
 	    , m_enable_conservative_raster(false)
 	    , m_tex3Ddisp(m_voxels_tex3D)
 	{
 
 		//std::cout << "Voxelizer Generate Test Data" << std::endl;
-		//m_voxels_tex3D.GenerateLDRTestData(128, 128, 128).Upload().BindAndSetTextureParameters(TexParams::NearestFiltering);
+		//m_voxels_tex3D.GenerateLDRTestData(m_gridSize, m_gridSize, m_gridSize).Upload().BindAndSetTextureParameters(TexParams::NearestFiltering);
 
 		// BUILD SHADER PROGRAM
 
@@ -42,7 +42,7 @@ namespace e186
 #endif
 
 		TwAddVarRW(m_tweak_bar, "GridSize", TW_TYPE_UINT32, &m_gridSize, "min=0");
-		//TwAddVarRW(m_tweak_bar, "Scale", TW_TYPE_FLOAT, &m_scale, "min=0 step=0.1"); // set to gridSize - 1
+		TwAddVarRW(m_tweak_bar, "ModelScale", TW_TYPE_FLOAT, &m_modelScale, "min=0 step=0.1");
 
 		TwAddButton(m_tweak_bar, "Voxelize!", VoxelizeButtonCallback, this, " label='Voxelize!' ");
 	}
@@ -64,7 +64,7 @@ namespace e186
 
 	void Voxelizer::SetScale(float scale)
 	{
-		m_scale = scale;
+		m_modelScale = scale;
 	}
 
 	void Voxelizer::Voxelize(const std::string &modelPath)
@@ -106,7 +106,7 @@ namespace e186
 		                                        glm::vec3(0, 1, 0));
 
 		m_voxelize_shader.Use();
-		m_voxelize_shader.SetUniform("uScaleFactor", static_cast<float>(m_gridSize-1));
+		m_voxelize_shader.SetUniform("uScaleFactor", m_modelScale);
 		m_voxelize_shader.SetUniform("uViewProjMatOrthoX", orthoProjMat * viewMatX);
 		m_voxelize_shader.SetUniform("uViewProjMatOrthoY", orthoProjMat * viewMatY);
 		m_voxelize_shader.SetUniform("uViewProjMatOrthoZ", orthoProjMat * viewMatZ);

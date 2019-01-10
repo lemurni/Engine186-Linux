@@ -46,8 +46,8 @@ namespace e186
 		// size of voxel grid in xyz
 		unsigned int m_gridSize;
 
-		// scale factor should fit model vertices into unit cube, voxelization only happens in unit cube
-		float m_scale;
+		// scale factor to fit model vertices into viewport (viewport is set to voxel grid size)
+		float m_modelScale;
 
 		Tex3dDisplayer m_tex3Ddisp;
 
