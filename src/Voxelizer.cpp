@@ -67,6 +67,8 @@ namespace e186
 	void Voxelizer::Voxelize(Model& model, const glm::vec3& gridSize)
 	{
 
+		m_voxels_tex3D.DestroyOnline();
+		m_voxels_tex3D.DestroyOffline();
 		m_voxels_tex3D.GenerateEmpty(gridSize.x, gridSize.y, gridSize.z).Upload().BindAndSetTextureParameters(TexParams::NearestFiltering);
 
 		// SETUP SHADER DATA
