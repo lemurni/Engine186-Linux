@@ -1,7 +1,7 @@
 layout (location = 0) in vec4 aVertexPosition;
 layout (location = 1) in vec2 aVertexTexCoord;
 
-uniform float uScaleFactor; // should scale the model to fit in unit cube! only within unit cube will be voxelized
+uniform float uScaleFactor; // viewport size is voxel grid size, thus to scale to fit (usually scale to grid size - 1)
 layout(location = 140) uniform vec2 uTexCoordsScale = vec2(1, 1);
 
 out VertexData

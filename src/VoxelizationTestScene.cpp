@@ -33,7 +33,7 @@ namespace e186
 		m_model_for_voxelization = Model::LoadFromFile("assets/models/companion_cube/companion_cube.obj", glm::mat4(1.0f), MOLF_default);
 		assert(m_model_for_voxelization);
 
-		m_voxelizer->Voxelize(*m_model_for_voxelization, glm::vec3(128, 128, 128));
+		m_voxelizer->Voxelize(*m_model_for_voxelization);
 
 
 		// SETUP SCENE

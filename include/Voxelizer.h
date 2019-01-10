@@ -43,6 +43,9 @@ namespace e186
 		// if RegularGridTex3D enabled, stores result of latest call to Voxelizer::Voxelize()
 		Tex3D m_voxels_tex3D;
 
+		// size of voxel grid in xyz
+		unsigned int m_gridSize;
+
 		// scale factor should fit model vertices into unit cube, voxelization only happens in unit cube
 		float m_scale;
 
@@ -63,13 +66,17 @@ namespace e186
 		Voxelizer();
 		~Voxelizer();
 
+		void SetGridSize(uint gridSize); // can also be set via AntTweakBar
+		void SetScale(float scale); // can also be set via AntTweakBar
+
 		// voxelize the given mesh model and store the result in a data structure
 		// the resulting data structure is determined by m_voxel_storage_mode
-		void Voxelize(Model &model, const glm::vec3& gridSize);
-		void Voxelize(const std::string &modelPath, const glm::vec3 &gridSize);
+		void Voxelize(Model &model);
+		void Voxelize(const std::string &modelPath);
 
 		// visualize the voxels
 		void RenderVoxelGrid(const glm::mat4 &vM, const glm::mat4 &pM);
+
 	};
 
 }

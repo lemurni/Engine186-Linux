@@ -8,7 +8,8 @@ namespace e186
     Voxelizer::Voxelizer()
 	    : m_tweak_bar(Engine::current()->tweak_bar_manager().create_new_tweak_bar("Voxelizer"))
 	    , m_voxel_storage_mode(VoxelStorageMode::Tex3D)
-	    , m_scale(50)
+	    , m_gridSize(64)
+	    , m_scale(static_cast<float>(m_gridSize-1))
 	    , m_enable_conservative_raster(false)
 	    , m_tex3Ddisp(m_voxels_tex3D)
 	{
@@ -40,7 +41,8 @@ namespace e186
 		TwAddVarRW(m_tweak_bar, "NV Conservative Raster", TW_TYPE_BOOLCPP, &m_enable_conservative_raster, "readonly=true");
 #endif
 
-		TwAddVarRW(m_tweak_bar, "Scale", TW_TYPE_FLOAT, &m_scale, "min=0 step=0.1");
+		TwAddVarRW(m_tweak_bar, "GridSize", TW_TYPE_UINT32, &m_gridSize, "min=0");
+		//TwAddVarRW(m_tweak_bar, "Scale", TW_TYPE_FLOAT, &m_scale, "min=0 step=0.1"); // set to gridSize - 1
 
 		TwAddButton(m_tweak_bar, "Voxelize!", VoxelizeButtonCallback, this, " label='Voxelize!' ");
 	}
@@ -52,24 +54,32 @@ namespace e186
 	void TW_CALL VoxelizeButtonCallback(void *voxelizerDataVoid)
 	{
 		Voxelizer *voxelizerData = static_cast<Voxelizer *>(voxelizerDataVoid);
-		voxelizerData->Voxelize("assets/models/companion_cube/companion_cube.obj", glm::vec3(128, 128, 128));
-
+		voxelizerData->Voxelize("assets/models/companion_cube/companion_cube.obj");
 	}
 
-	void Voxelizer::Voxelize(const std::string& modelPath, const glm::vec3& gridSize)
+	void Voxelizer::SetGridSize(uint gridSize)
+	{
+		m_gridSize = gridSize;
+	}
+
+	void Voxelizer::SetScale(float scale)
+	{
+		m_scale = scale;
+	}
+
+	void Voxelizer::Voxelize(const std::string &modelPath)
 	{
 		m_model = Model::LoadFromFile(modelPath, glm::mat4(1.0f), MOLF_default);
 		assert(m_model);
 
-		Voxelize(*m_model, gridSize);
+		Voxelize(*m_model);
 	}
 
-	void Voxelizer::Voxelize(Model& model, const glm::vec3& gridSize)
+	void Voxelizer::Voxelize(Model& model)
 	{
-
 		m_voxels_tex3D.DestroyOnline();
 		m_voxels_tex3D.DestroyOffline();
-		m_voxels_tex3D.GenerateEmpty(gridSize.x, gridSize.y, gridSize.z).Upload().BindAndSetTextureParameters(TexParams::NearestFiltering);
+		m_voxels_tex3D.GenerateEmpty(m_gridSize, m_gridSize, m_gridSize).Upload().BindAndSetTextureParameters(TexParams::NearestFiltering);
 
 		// SETUP SHADER DATA
 
@@ -96,7 +106,7 @@ namespace e186
 		                                        glm::vec3(0, 1, 0));
 
 		m_voxelize_shader.Use();
-		m_voxelize_shader.SetUniform("uScaleFactor", m_scale);
+		m_voxelize_shader.SetUniform("uScaleFactor", static_cast<float>(m_gridSize-1));
 		m_voxelize_shader.SetUniform("uViewProjMatOrthoX", orthoProjMat * viewMatX);
 		m_voxelize_shader.SetUniform("uViewProjMatOrthoY", orthoProjMat * viewMatY);
 		m_voxelize_shader.SetUniform("uViewProjMatOrthoZ", orthoProjMat * viewMatZ);
