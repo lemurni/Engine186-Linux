@@ -43,7 +43,7 @@ void main()
         // then if we rotate depth to point to X instead of Z, then x points to -Z, y points to Y
         voxelCoord.x = int(uGridSizeX * depth);
         voxelCoord.y = int(gl_FragCoord.y);
-        voxelCoord.z = -int(gl_FragCoord.x);
+        voxelCoord.z = uGridSizeZ-1 - int(gl_FragCoord.x);
     }
     else if (axisOfTriangleProjection == 1)
     {
@@ -52,11 +52,11 @@ void main()
         // then if we rotate depth to point to Y instead of Z, then x points to X, y points to -Z
         voxelCoord.x = int(gl_FragCoord.x);
         voxelCoord.y = int(uGridSizeY * depth);
-        voxelCoord.z = -int(gl_FragCoord.y);
+        voxelCoord.z = uGridSizeZ-1 - int(gl_FragCoord.y);
     }
     else if (axisOfTriangleProjection == 2)
     {
-        // projection was in direction Z, thus left-handed 77NDC (x,y,depth) corresponds to our left-handed (X,Y,Z)
+        // projection was in direction Z, thus left-handed NDC (x,y,depth) corresponds to our left-handed (X,Y,Z)
         voxelCoord.x = int(gl_FragCoord.x);
         voxelCoord.y = int(gl_FragCoord.y);
         voxelCoord.z = int(uGridSizeZ * depth);
@@ -64,7 +64,7 @@ void main()
 
     // we want a right-handed voxel volume coordinate system
     // so we flip, for example, Y and wrap around in the grid, i.e. Y -> maxY - Y
-    voxelCoord.y = uGridSizeY-1 - voxelCoord.y;
+    //voxelCoord.y = uGridSizeY-1 - voxelCoord.y;
 
     // store voxel data
     // TODO average values from all projected triangles that coincide on the voxel using atomic add

@@ -8,7 +8,7 @@ namespace e186
     Voxelizer::Voxelizer()
 	    : m_tweak_bar(Engine::current()->tweak_bar_manager().create_new_tweak_bar("Voxelizer"))
 	    , m_voxel_storage_mode(VoxelStorageMode::Tex3D)
-	    , m_scale(1)
+	    , m_scale(50)
 	    , m_enable_conservative_raster(false)
 	    , m_tex3Ddisp(m_voxels_tex3D)
 	{
@@ -133,6 +133,8 @@ namespace e186
 
 		glDisable(GL_CONSERVATIVE_RASTERIZATION_NV);
 		glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+		glEnable(GL_CULL_FACE);
+		glEnable(GL_DEPTH_TEST);
 	}
 
 	void Voxelizer::RenderVoxelGrid(const glm::mat4& vM, const glm::mat4& pM)
