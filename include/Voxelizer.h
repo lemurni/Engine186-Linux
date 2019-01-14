@@ -35,13 +35,37 @@ namespace e186
 	
 		AntTweakBarHandle m_tweak_bar;
 
-		// VOXELIZATION AND VOXEL DATA
+		// VOXELIZATION DATA
 
 		VoxelStorageMode m_voxel_storage_mode;
-		FillMode m_fill_mode;
 
 		// the mesh model to be voxelized
 		std::unique_ptr<Model> m_model;
+
+		// OpenGL 3D Texture to store voxels in regular grid
+		// if RegularGridTex3D enabled, stores result of latest call to Voxelizer::Voxelize()
+		Tex3D m_voxels_tex3D;
+
+		// Octree data structure for more efficient voxel storage
+		// if OctreeHierarchy enabled, stores result of latest call to Voxelizer::Voxelize()
+		//VoxelOctree m_voxels_octree;
+
+		// size of voxel grid in xyz
+		unsigned int m_gridSize;
+
+		// scale factor to fit model vertices into viewport (viewport is set to voxel grid size)
+		float m_modelScale;
+
+		// enable NVidia hardware conservative rasterization (OpenGL 4.3+), if available
+		// GL_NV_conservative_raster is defined by GLAD OpenGL loader in external/glad.h
+		// https://developer.nvidia.com/sites/default/files/akamai/opengl/specs/GL_NV_conservative_raster.txt
+		bool m_enable_conservative_raster;
+
+		// fill empty voxels
+		FillMode m_fill_mode;
+		glm::vec3 m_fill_color;
+
+		// VOXELIZATION SHADERS
 
 		// shader for the gpu rasterizer based mesh voxelization
 		Shader m_voxelize_shader;
@@ -52,29 +76,9 @@ namespace e186
 		// compute shader to fill inside of voxelized mesh surface
 		Shader m_voxel_fill_inside_shader;
 
-		// OpenGL 3D Texture to store voxels in regular grid
-		// if RegularGridTex3D enabled, stores result of latest call to Voxelizer::Voxelize()
-		Tex3D m_voxels_tex3D;
-
-		// size of voxel grid in xyz
-		unsigned int m_gridSize;
-
-		// scale factor to fit model vertices into viewport (viewport is set to voxel grid size)
-		float m_modelScale;
+		// VOXEL DISPLAY
 
 		Tex3dDisplayer m_tex3Ddisp;
-
-		// enable NVidia hardware conservative rasterization (OpenGL 4.3+), if available
-		// GL_NV_conservative_raster is defined by GLAD OpenGL loader in external/glad.h
-		// https://developer.nvidia.com/sites/default/files/akamai/opengl/specs/GL_NV_conservative_raster.txt
-		bool m_enable_conservative_raster;
-
-		// fill the inside of voxelized mesh surface
-		bool m_fill_voxels_inside_surface;
-
-		// Octree data structure for more efficient voxel storage
-		// if OctreeHierarchy enabled, stores result of latest call to Voxelizer::Voxelize()
-		//VoxelOctree m_voxels_octree;
 
 
 	public:

@@ -12,6 +12,7 @@ namespace e186
 	    , m_modelScale(static_cast<float>(m_gridSize-1))
 	    , m_enable_conservative_raster(false)
 	    , m_fill_mode(FillMode::None)
+	    , m_fill_color(glm::vec3(1))
 	    , m_tex3Ddisp(m_voxels_tex3D)
 	{
 
@@ -58,6 +59,7 @@ namespace e186
 
 		TwType fillModeTWType = TwDefineEnumFromString("FillMode", "None,FillEmpty,FillInside");
 		TwAddVarRW(m_tweak_bar, "Fill Mode", fillModeTWType, &m_fill_mode, "");
+		TwAddVarRW(m_tweak_bar, "Fill Color", TW_TYPE_COLOR3F, glm::value_ptr(m_fill_color), "colormode=hls");
 
 		TwAddButton(m_tweak_bar, "Voxelize!", VoxelizeButtonCallback, this, " label='Voxelize!' ");
 	}
@@ -166,7 +168,7 @@ namespace e186
 		if (m_fill_mode == FillMode::FillEmpty)
 		{
 			m_voxel_fill_empty_shader.Use();
-			m_voxel_fill_empty_shader.SetUniform("uFillColor", glm::vec3(1, 0.1, 0.6));
+			m_voxel_fill_empty_shader.SetUniform("uFillColor", m_fill_color);
 			m_voxel_fill_empty_shader.SetImageTexture("uTex3D", m_voxels_tex3D, 0, 0, false, 0, GL_READ_WRITE);
 			Compute(m_voxel_fill_empty_shader, m_voxels_tex3D.width(), m_voxels_tex3D.height(), m_voxels_tex3D.depth());
 			glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT | GL_FRAMEBUFFER_BARRIER_BIT);
@@ -174,7 +176,7 @@ namespace e186
 		else if (m_fill_mode == FillMode::FillInside)
 		{
 			m_voxel_fill_inside_shader.Use();
-			m_voxel_fill_inside_shader.SetUniform("uFillColor", glm::vec3(1, 0.1, 0.6));
+			m_voxel_fill_inside_shader.SetUniform("uFillColor", m_fill_color);
 			m_voxel_fill_inside_shader.SetImageTexture("uTex3D", m_voxels_tex3D, 0, 0, false, 0, GL_READ_WRITE);
 			Compute(m_voxel_fill_inside_shader, m_voxels_tex3D.width(), m_voxels_tex3D.height(), 1);
 			glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT | GL_FRAMEBUFFER_BARRIER_BIT);
