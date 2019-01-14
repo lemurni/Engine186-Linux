@@ -179,6 +179,7 @@ set(SRC_SHADERS
     assets/shaders/voxelize.vert
     assets/shaders/voxelize.geom
     assets/shaders/voxelize.frag
+    assets/shaders/voxel_fill.comp
 
 )
 

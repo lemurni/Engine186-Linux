@@ -1,0 +1,28 @@
+// TODO number of threads should be width*height of 3D texture
+layout(local_size_x = 16, local_size_y = 16, local_size_z = 1) in; // layout declaration
+layout(rgba16f) uniform image3D uTex3D;
+
+void main()
+{
+    ivec3 gridSize = imageSize(uTex3D);
+    ivec3 pos = ivec3(gl_GlobalInvocationID.xy, 0);
+    int isInsideVoxelSurface = -1; // -1 no, 1 yes
+    vec4 fillValue = vec4(0);
+
+    // each thread walks along z at its xy
+    //
+    for (int i = 0; i < gridSize.z - 1, ++i)
+    {
+        value = imageLoad(uTex3D, pos).rgba
+        if (length(value) > 0)
+        {
+            isInsideVoxelSurface = -isInsideVoxelSurface;
+            fillValue = value;
+        }
+        else if (isInsideVoxelSurface = 1)
+        {
+            imageStore(uTex3D, pos, fillValue);
+        }
+    }
+
+}
