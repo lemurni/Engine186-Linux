@@ -11,19 +11,30 @@ namespace e186
 	    , m_gridSize(64)
 	    , m_modelScale(static_cast<float>(m_gridSize-1))
 	    , m_enable_conservative_raster(false)
+	    , m_fill_mode(FillMode::None)
 	    , m_tex3Ddisp(m_voxels_tex3D)
 	{
 
 		//std::cout << "Voxelizer Generate Test Data" << std::endl;
 		//m_voxels_tex3D.GenerateLDRTestData(m_gridSize, m_gridSize, m_gridSize).Upload().BindAndSetTextureParameters(TexParams::NearestFiltering);
 
-		// BUILD SHADER PROGRAM
+		// BUILD SHADERS
 
 		m_voxelize_shader
 		    .AddToMultipleShaderSources(Shader::version_string(), ShaderType::Vertex | ShaderType::Geometry | ShaderType::Fragment)
 		    .AddVertexShaderSourceFromFile("assets/shaders/voxelize.vert")
 		    .AddGeometryShaderSourceFromFile("assets/shaders/voxelize.geom")
 		    .AddFragmentShaderSourceFromFile("assets/shaders/voxelize.frag")
+		    .Build();
+
+		m_voxel_fill_empty_shader
+		    .AddToMultipleShaderSources(Shader::version_string(), ShaderType::Compute)
+		    .AddComputeShaderSourceFromFile("assets/shaders/voxel_fill_empty.comp")
+		    .Build();
+
+		m_voxel_fill_inside_shader
+		    .AddToMultipleShaderSources(Shader::version_string(), ShaderType::Compute)
+		    .AddComputeShaderSourceFromFile("assets/shaders/voxel_fill_inside.comp")
 		    .Build();
 
 		// SETUP ANTTWEAKBAR
@@ -34,6 +45,10 @@ namespace e186
 
 		TwType voxelStorageModeTWType = TwDefineEnumFromString("VoxelStorageMode", "Tex3D,OctreeHierarchy");
 		TwAddVarRW(m_tweak_bar, "Voxel Storage Mode", voxelStorageModeTWType, &m_voxel_storage_mode, "");
+
+		TwAddVarRW(m_tweak_bar, "GridSize", TW_TYPE_UINT32, &m_gridSize, "min=0");
+		TwAddVarRW(m_tweak_bar, "ModelScale", TW_TYPE_FLOAT, &m_modelScale, "min=0 step=0.1");
+
 #ifdef GL_CONSERVATIVE_RASTERIZATION_NV
 		m_enable_conservative_raster = true;
 		TwAddVarRW(m_tweak_bar, "NV Conservative Raster", TW_TYPE_BOOLCPP, &m_enable_conservative_raster, nullptr);
@@ -41,8 +56,8 @@ namespace e186
 		TwAddVarRW(m_tweak_bar, "NV Conservative Raster", TW_TYPE_BOOLCPP, &m_enable_conservative_raster, "readonly=true");
 #endif
 
-		TwAddVarRW(m_tweak_bar, "GridSize", TW_TYPE_UINT32, &m_gridSize, "min=0");
-		TwAddVarRW(m_tweak_bar, "ModelScale", TW_TYPE_FLOAT, &m_modelScale, "min=0 step=0.1");
+		TwType fillModeTWType = TwDefineEnumFromString("FillMode", "None,FillEmpty,FillInside");
+		TwAddVarRW(m_tweak_bar, "Fill Mode", fillModeTWType, &m_fill_mode, "");
 
 		TwAddButton(m_tweak_bar, "Voxelize!", VoxelizeButtonCallback, this, " label='Voxelize!' ");
 	}
@@ -147,6 +162,24 @@ namespace e186
 		glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 		glEnable(GL_CULL_FACE);
 		glEnable(GL_DEPTH_TEST);
+
+		if (m_fill_mode == FillMode::FillEmpty)
+		{
+			m_voxel_fill_empty_shader.Use();
+			m_voxel_fill_empty_shader.SetUniform("uFillColor", glm::vec3(1, 0.1, 0.6));
+			m_voxel_fill_empty_shader.SetImageTexture("uTex3D", m_voxels_tex3D, 0, 0, false, 0, GL_READ_WRITE);
+			Compute(m_voxel_fill_empty_shader, m_voxels_tex3D.width(), m_voxels_tex3D.height(), m_voxels_tex3D.depth());
+			glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT | GL_FRAMEBUFFER_BARRIER_BIT);
+		}
+		else if (m_fill_mode == FillMode::FillInside)
+		{
+			m_voxel_fill_inside_shader.Use();
+			m_voxel_fill_inside_shader.SetUniform("uFillColor", glm::vec3(1, 0.1, 0.6));
+			m_voxel_fill_inside_shader.SetImageTexture("uTex3D", m_voxels_tex3D, 0, 0, false, 0, GL_READ_WRITE);
+			Compute(m_voxel_fill_inside_shader, m_voxels_tex3D.width(), m_voxels_tex3D.height(), 1);
+			glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT | GL_FRAMEBUFFER_BARRIER_BIT);
+		}
+
 	}
 
 	void Voxelizer::RenderVoxelGrid(const glm::mat4& vM, const glm::mat4& pM)

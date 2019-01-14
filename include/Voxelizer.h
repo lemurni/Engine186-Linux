@@ -23,7 +23,13 @@ namespace e186
 			Tex3D = 0,
 			OctreeHierarchy = 1
 	    };
-		
+
+		enum struct FillMode
+		{
+			None = 0,
+			FillEmpty = 1,
+			FillInside = 2
+		};
 
 	private:
 	
@@ -32,12 +38,19 @@ namespace e186
 		// VOXELIZATION AND VOXEL DATA
 
 		VoxelStorageMode m_voxel_storage_mode;
+		FillMode m_fill_mode;
 
 		// the mesh model to be voxelized
 		std::unique_ptr<Model> m_model;
 
 		// shader for the gpu rasterizer based mesh voxelization
 		Shader m_voxelize_shader;
+
+		// compute shader to fill all empty voxels
+		Shader m_voxel_fill_empty_shader;
+
+		// compute shader to fill inside of voxelized mesh surface
+		Shader m_voxel_fill_inside_shader;
 
 		// OpenGL 3D Texture to store voxels in regular grid
 		// if RegularGridTex3D enabled, stores result of latest call to Voxelizer::Voxelize()
@@ -55,6 +68,9 @@ namespace e186
 		// GL_NV_conservative_raster is defined by GLAD OpenGL loader in external/glad.h
 		// https://developer.nvidia.com/sites/default/files/akamai/opengl/specs/GL_NV_conservative_raster.txt
 		bool m_enable_conservative_raster;
+
+		// fill the inside of voxelized mesh surface
+		bool m_fill_voxels_inside_surface;
 
 		// Octree data structure for more efficient voxel storage
 		// if OctreeHierarchy enabled, stores result of latest call to Voxelizer::Voxelize()
