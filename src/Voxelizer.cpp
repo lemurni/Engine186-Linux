@@ -11,7 +11,7 @@ namespace e186
 	    , m_gridSize(64)
 	    , m_modelScale(static_cast<float>(m_gridSize-1))
 	    , m_enable_conservative_raster(false)
-	    , m_fill_mode(FillMode::None)
+	    , m_fill_mode(FillMode::FillInside)
 	    , m_fill_color(glm::vec3(1))
 	    , m_tex3Ddisp(m_voxels_tex3D)
 	{
@@ -178,6 +178,16 @@ namespace e186
 			m_voxel_fill_inside_shader.Use();
 			m_voxel_fill_inside_shader.SetUniform("uFillColor", m_fill_color);
 			m_voxel_fill_inside_shader.SetImageTexture("uTex3D", m_voxels_tex3D, 0, 0, false, 0, GL_READ_WRITE);
+
+			m_voxel_fill_inside_shader.SetUniform("uWalkDirection", 0);
+			Compute(m_voxel_fill_inside_shader, 1, m_voxels_tex3D.height(), m_voxels_tex3D.depth());
+			glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT | GL_FRAMEBUFFER_BARRIER_BIT);
+
+			m_voxel_fill_inside_shader.SetUniform("uWalkDirection", 1);
+			Compute(m_voxel_fill_inside_shader, m_voxels_tex3D.width(), 1, m_voxels_tex3D.depth());
+			glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT | GL_FRAMEBUFFER_BARRIER_BIT);
+
+			m_voxel_fill_inside_shader.SetUniform("uWalkDirection", 2);
 			Compute(m_voxel_fill_inside_shader, m_voxels_tex3D.width(), m_voxels_tex3D.height(), 1);
 			glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT | GL_FRAMEBUFFER_BARRIER_BIT);
 		}
