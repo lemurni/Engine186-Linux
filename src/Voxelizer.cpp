@@ -74,7 +74,7 @@ namespace e186
 		voxelizerData->Voxelize("assets/models/companion_cube/companion_cube.obj");
 	}
 
-	void Voxelizer::SetGridSize(uint gridSize)
+	void Voxelizer::SetGridSize(uint32_t gridSize)
 	{
 		m_gridSize = gridSize;
 	}

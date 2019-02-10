@@ -86,7 +86,7 @@ namespace e186
 		Voxelizer();
 		~Voxelizer();
 
-		void SetGridSize(uint gridSize); // can also be set via AntTweakBar
+		void SetGridSize(uint32_t gridSize); // can also be set via AntTweakBar
 		void SetScale(float scale); // can also be set via AntTweakBar
 
 		// voxelize the given mesh model and store the result in a data structure

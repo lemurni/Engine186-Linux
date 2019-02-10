@@ -66,10 +66,42 @@ void main()
     // so we flip, for example, Y and wrap around in the grid, i.e. Y -> maxY - Y
     //voxelCoord.y = uGridSizeY-1 - voxelCoord.y;
 
-    // store voxel data
-    // TODO average values from all projected triangles that coincide on the voxel using atomic add
+    // composite and store projected triangle fragments as voxel data
+    // average values from all projected triangle fragments that coincide on the voxel
+    // this requires atomic since fragments are processed in parallel
+    // GL imageAtomicAdd only works for 32bit integer images though, so we use an emulation
+    // TODO
     vec2 scaledTexCoords = uTexCoordsScale * v_in.texCoords;
     vec3 diffuseTexColor = texture(uDiffuseTexSampler, scaledTexCoords).rgb;
     imageStore(uVoxelDiffuseColor, voxelCoord, vec4(diffuseTexColor, 1.0));
 
 }
+
+// TODO this still only works on integer images
+// 2012 Crassin, Green: Octree-Based Sparse Voxelization Using The GPU Hardware Rasterizer
+// Listing 22.1.
+// Emulation of imageAtomicAdd (which works on integer values) for float values using compare-and-swap.
+// The idea is to loop on each write until there are no more conflicts and the texel value,
+// with which we have computed the sum has not been changed by another thread.
+// This is a lot slower than native atomicAdd but allows functionally correct behavior.
+// imageAtomicCompSwap is in OpenGL specification since version 4.2.
+// floatBitToUInt and uintBitsToFloat are in OpenGL specification since version 3.3.
+void imageAtomicFloatAdd(layout(r32ui) coherent volatile uimage3D imgUI, ivec3 coords, float valueToAdd)
+{
+    uint newVal = floatBitToUInt(valueToAdd);
+    uint prevVal = 0; // the knowledge we have about texel value at coords from last loop iteration
+    uint currentVal; // current knowledge we have about texel value at coords
+
+    // Loop as long as destination value gets changed by other threads
+    // imageAtomicCompSwap compares texel to prevVal atomically
+    // if equal stores newVal, else nothing happens. always returns original texel value.
+    // texel value may be updated by other threads, but imageAtomicCompSwap checks and assigns as an atomic operation
+    // if checked value equals our previously known texel value prevVal, it means our newVal is also up-to-date
+    // if checked value has changed, it means our newVal is also outdated and we must loop on
+    while ((currentVal = imageAtomicCompSwap(imgUI, coords, prevVal, newVal) != prevVal)
+    {
+        prevVal = currentVal;
+        newVal = floatBitsToUInt((uintBitsToFloat(currentVal) + valueToAdd));
+    }
+}
+
